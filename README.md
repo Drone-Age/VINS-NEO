@@ -8,6 +8,8 @@ ROS 2 Jazzy underlay. Docker verifies the package SHA-256 and builds only the
 VINS overlay; the resulting `vins-mono-ros2` package depends on the exact
 `iros2-0` Debian package version. Because IROS2_0 does not ship `cv_bridge`,
 the release overlay builds `cv_bridge` 4.1.0 from its pinned upstream Git SHA.
+The runtime Docker workflow downloads the published VINS package and verifies
+its SHA-256 instead of using an unverified local artifact.
 
 ## Документація українською
 
