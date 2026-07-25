@@ -1,0 +1,134 @@
+name: New VINS-NEO release
+description: Plan a versioned VINS-NEO release against a pinned iROS2 package
+title: "[Release] VINS-NEO "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form before creating the release commit. Verify the latest
+        stable iROS2 release first, then pin the selected package in the same
+        commit as the VINS version and changelog.
+
+  - type: input
+    id: product_version
+    attributes:
+      label: VINS-NEO product version
+      description: Use MAJOR.MINOR.FEATURE.PATCH.
+      placeholder: 1.0.2.0
+    validations:
+      required: true
+
+  - type: input
+    id: release_tag
+    attributes:
+      label: Git release tag
+      description: Use vMAJOR_MINOR_FEATURE_PATCH with two-digit padding.
+      placeholder: v1_00_02_00
+    validations:
+      required: true
+
+  - type: textarea
+    id: release_scope
+    attributes:
+      label: Release scope
+      description: Summarize user-visible changes and the reason for the release.
+    validations:
+      required: true
+
+  - type: input
+    id: iros_release
+    attributes:
+      label: Selected stable iROS2 release
+      description: Recheck the official releases/latest immediately before the release commit.
+      placeholder: v0.1.2
+    validations:
+      required: true
+
+  - type: input
+    id: iros_deb_version
+    attributes:
+      label: iROS2 Debian version
+      placeholder: 0.1.2-1+deb13
+    validations:
+      required: true
+
+  - type: input
+    id: iros_release_url
+    attributes:
+      label: Official iROS2 release URL
+      placeholder: https://github.com/Drone-Age/iros2_0/releases/tag/v0.1.2
+    validations:
+      required: true
+
+  - type: input
+    id: iros_asset_url
+    attributes:
+      label: Debian 13 ARM64 asset URL
+      placeholder: https://github.com/Drone-Age/iros2_0/releases/download/v0.1.2/iros2-0_0.1.2-1+deb13_arm64.deb
+    validations:
+      required: true
+
+  - type: input
+    id: iros_sha256
+    attributes:
+      label: iROS2 asset SHA-256
+      description: Enter the verified 64-character lowercase digest.
+    validations:
+      required: true
+
+  - type: input
+    id: opencv_version
+    attributes:
+      label: Required OpenCV version
+      placeholder: 4.10.0
+    validations:
+      required: true
+
+  - type: input
+    id: cv_bridge_ref
+    attributes:
+      label: Pinned cv_bridge Git SHA
+      description: Use the full 40-character vision_opencv commit SHA.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: metadata_commit
+    attributes:
+      label: Release commit metadata
+      options:
+        - label: CMake version, version.h.in tag, CHANGELOG and release manifest will be committed together.
+          required: true
+        - label: The selected iROS2 asset Package, Version, Architecture and SHA-256 will be verified.
+          required: true
+        - label: The staged metadata gate will run with -Index and -VerifyAsset.
+          required: true
+        - label: The committed metadata gate will pass before the Git tag is created.
+          required: true
+
+  - type: checkboxes
+    id: native_gate
+    attributes:
+      label: Native ARM64 release gate
+      options:
+        - label: Build and tests will run natively on Debian 13 ARM64 without Docker, emulation or cross-compilation.
+          required: true
+        - label: colcon tests, ldd validation, package installation and ROS smoke tests will pass.
+          required: true
+        - label: The configured dataset test will pass.
+          required: true
+        - label: The generated package will depend on the exact selected iros2-0 Debian version.
+          required: true
+
+  - type: checkboxes
+    id: publication
+    attributes:
+      label: Publication
+      options:
+        - label: The Git tag will be created only after the native release gate passes.
+          required: true
+        - label: The GitHub Release will include the ARM64 package, SHA-256 and release evidence.
+          required: true
+        - label: The published package will be verified on a clean supported Raspberry Pi OS or Debian 13 ARM64 system.
+          required: true

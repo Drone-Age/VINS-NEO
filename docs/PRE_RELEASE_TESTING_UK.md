@@ -27,10 +27,13 @@ Docker та CI дозволені лише як додаткові переві�
 
 1. Формат версії продукту — `MAJOR.MINOR.FEATURE.PATCH`.
 2. Версія CMake, runtime-тег, `CHANGELOG.md` і release-тег узгоджені.
-3. Усі `package.xml` є валідними XML і використовують узгоджену
+3. `config/releases/<RELEASE_TAG>.env` входить до того самого release-коміту
+   та фіксує URL, Debian-версію і SHA-256 обраного iROS2 asset.
+4. Усі `package.xml` є валідними XML і використовують узгоджену
    трикомпонентну ROS-версію.
-4. `git diff --check` не виявляє whitespace-помилок.
-5. У робочому дереві немає випадково доданих build/output-артефактів.
+5. `tools/check-release-metadata.ps1` успішно перевіряє release-коміт.
+6. `git diff --check` не виявляє whitespace-помилок.
+7. У робочому дереві немає випадково доданих build/output-артефактів.
 
 ### 2.2. Перевірки нативного середовища
 
@@ -89,17 +92,38 @@ Docker та CI дозволені лише як додаткові переві�
 
 ## 4. Команди та протокол
 
-Релізні build/test команди виконуються лише в shell нативної ARM64-системи.
+Релізні build/test команди виконує `tools/native-release.sh` лише в shell
+нативної ARM64-системи. Windows-скрипт
+`tools/invoke-native-release.ps1` є SSH-диспетчером: він перевіряє цільовий
+хост, передає архів вибраної Git-ревізії в ізольований каталог і запускає там
+нативний скрипт. Він не виконує build/test локально.
+
+Повний gate із Windows PowerShell:
+
+```powershell
+.\tools\invoke-native-release.ps1 `
+  -InstallDependencies -InstallTest -DatasetTest
+```
+
+Тільки безпечна перевірка доступності та параметрів середовища:
+
+```powershell
+.\tools\invoke-native-release.ps1 -PreflightOnly
+```
+
+Без `-GitRef` вибирається найновіший версійний тег, доступний із `HEAD`.
+Залежності конкретного релізу фіксуються у
+`config/releases/<RELEASE_TAG>.env`. Параметри хоста читаються з
+ігнорованого Git файлу `config/native/native.env`.
+
+Обрана iROS2 не визначається під час збірки. Вона повинна бути зафіксована в
+release-коміті. Перед створенням коміту staged metadata перевіряється командою:
+
+```powershell
+.\tools\check-release-metadata.ps1 `
+  -Index -ReleaseTag <RELEASE_TAG> -VerifyAsset
+```
+
 Windows PowerShell scripts `tools/test-release.ps1` і
-`tools/build-arm64-deb.ps1`, а також Docker Compose не є релізним workflow.
-
-До затвердження і додавання в репозиторій нативного build/test script випуск
-нового релізу заблокований. Затверджений script повинен:
-
-1. Перевірити ОС, `aarch64`, `arm64`, OpenCV та версію `iros2-0`.
-2. Виконати чисту Release-збірку і `colcon test`.
-3. Сформувати `.deb` безпосередньо на нативній системі.
-4. Перевірити metadata, залежності, ELF через `ldd` і SHA-256.
-5. Встановити сформований пакет через `apt install ./<package>.deb`.
-6. Виконати ROS smoke-test та тест із dataset.
-7. Зберегти журнал команд і результатів як протокол релізу.
+`tools/build-arm64-deb.ps1`, Docker Compose, WSL, емуляція та
+cross-compilation не є релізним workflow.

@@ -1,11 +1,46 @@
 # Стандарт випуску релізів
 
+Новий випуск спочатку оформлюється через GitHub Issue Form
+`.github/ISSUE_TEMPLATE/release.yml`. Шаблон фіксує цільові версію і тег
+VINS-NEO, обрану iROS2, URL і SHA-256 asset, а також обов’язкові metadata,
+native gate і publication checklists.
+
 ## 1. Підготовка
 
 1. Визначити повну версію продукту.
 2. Визначити відповідний Git-тег.
-3. Оновити CMake, runtime-тег, документацію, `CHANGELOG.md` і ROS-маніфести.
-4. Переконатися, що зміни виконані в робочій гілці та мають зрозумілі коміти.
+3. До створення release-коміту вибрати й перевірити версію iROS2, з якою
+   випускатиметься ця версія VINS.
+4. Створити `config/releases/<RELEASE_TAG>.env` і зафіксувати в ньому:
+   - точну версію та Debian-версію iROS2;
+   - URL офіційного GitHub Release;
+   - URL ARM64 Debian asset;
+   - SHA-256 asset;
+   - очікувану версію OpenCV;
+   - повний Git SHA `cv_bridge`.
+5. Оновити CMake, runtime-тег, документацію, `CHANGELOG.md` і ROS-маніфести.
+6. Додати маніфест, CMake-версію, runtime-тег і запис `CHANGELOG.md` до одного
+   Git index та до одного release-коміту.
+7. До коміту виконати перевірку staged-вмісту:
+
+   ```powershell
+   .\tools\check-release-metadata.ps1 `
+     -Index -ReleaseTag v1_00_01_08 -VerifyAsset
+   ```
+
+8. Після коміту, але до створення тегу, перевірити сам коміт:
+
+   ```powershell
+   .\tools\check-release-metadata.ps1 `
+     -GitRef HEAD -ReleaseTag v1_00_01_08
+   ```
+
+9. Не створювати й не пересувати тег, якщо будь-яка перевірка metadata
+   завершилася помилкою.
+
+Маніфест `v1_00_01_07.env` є явно позначеним історичним backfill, оскільки
+політику маніфестів додано після публікації цього тегу. Для всіх наступних
+релізів `MANIFEST_MODE=backfill` заборонений.
 
 ## 2. Передрелізний gate
 
@@ -21,8 +56,21 @@
 
 ## 3. Формування артефактів
 
-1. Зібрати Debian 13 ARM64 `.deb` затвердженим нативним build script
-   безпосередньо на цільовій ARM64-системі.
+1. Зібрати Debian 13 ARM64 `.deb` затвердженим
+   `tools/native-release.sh` безпосередньо на цільовій ARM64-системі.
+   Із Windows його запускає лише SSH-диспетчер:
+
+   ```powershell
+   .\tools\invoke-native-release.ps1 `
+     -InstallDependencies -InstallTest -DatasetTest
+   ```
+
+   Версії залежностей беруться з
+   `config/releases/<RELEASE_TAG>.env`.
+   Якщо на нативному хості встановлена інша версія `iros2-0`, режим
+   `-InstallDependencies` завантажує asset за URL із маніфесту, перевіряє
+   SHA-256, поля `Package`, `Version` та `Architecture`, і лише після цього
+   встановлює пакет.
 2. Заборонено використовувати як релізний артефакт `.deb`, сформований у
    Docker, через емуляцію ARM64 на x86-64 або cross-compilation.
 3. Перевірити ім’я, control metadata, вміст і SHA-256.

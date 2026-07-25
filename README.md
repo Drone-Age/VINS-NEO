@@ -23,6 +23,8 @@ separate terminals), see [docs/MANUAL_RUNTIME_TEST_UK.md](docs/MANUAL_RUNTIME_TE
 - [Стандарти розробки та версіонування](docs/DEVELOPMENT_STANDARDS_UK.md)
 - [Стандарт передрелізного тестування](docs/PRE_RELEASE_TESTING_UK.md)
 - [Стандарт випуску релізів](docs/RELEASE_PROCESS_UK.md)
+- [Параметри нативної ARM64-системи](config/native/README_UK.md)
+- [Маніфести залежностей релізів](config/releases/README_UK.md)
 
 **New: Code has been adapted for Ubuntu 24.04. See the ros2_jazzy branch for details.**
 # 1. Introduction

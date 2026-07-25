@@ -14,18 +14,29 @@ cp config/native/native.env.example config/native/native.env
 Відредагуйте `config/native/native.env` відповідно до цільової Raspberry Pi.
 Цей файл ігнорується Git.
 
-Завантаження параметрів у поточний shell:
+Запуск із Windows PowerShell:
 
-```bash
-set -a
-source config/native/native.env
-set +a
+```powershell
+.\tools\invoke-native-release.ps1 -PreflightOnly
+.\tools\invoke-native-release.ps1 `
+  -InstallDependencies -InstallTest -DatasetTest
 ```
+
+Без параметра `-GitRef` диспетчер вибирає найновіший версійний тег, доступний
+із поточного `HEAD`. Параметри залежностей релізу беруться з версійованого
+`config/releases/<TAG>.env`, а не з локального файлу хоста.
+
+Під час підготовки нової версії маніфест залежностей, CMake-версія, release
+tag у `version.h.in` і запис `CHANGELOG.md` мають увійти до одного коміту.
+Команди обов’язкової перевірки наведені в
+`docs/RELEASE_PROCESS_UK.md`.
 
 ## Правила зберігання
 
 - `native.env.example` — версійований шаблон без секретів.
 - `native.env` — параметри конкретної машини; не комітиться.
+- `config/releases/<TAG>.env` — версійований маніфест версій IROS, OpenCV,
+  `cv_bridge` і продукту для конкретного релізу.
 - `/etc/vins-neo/iVIN.yaml` — активна перевірена конфігурація VINS-NEO на
   цільовій системі.
 - `~/.ssh/` — SSH-ключі; ніколи не копіюються до репозиторію.
@@ -33,6 +44,10 @@ set +a
 - Докази релізної збірки й тестів зберігаються окремо для кожного тегу та
   hostname у `release-evidence/<TAG>/<HOSTNAME>/` або додаються до GitHub
   Release як артефакт.
+
+PowerShell-диспетчер не змінює наявні Git worktree на Raspberry Pi. Він
+передає архів вибраної ревізії в окремий каталог під `OUTPUT_DIR`, додає
+поточний затверджений native script і запускає його через SSH.
 
 Калібрування сенсора можна додати до Git окремим перевіреним файлом лише якщо
 воно не містить приватних даних і має чітко визначені модель пристрою, серійний
