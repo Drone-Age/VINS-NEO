@@ -2,6 +2,13 @@
 ## ROS2 version of VINS-MONO
 **Current version: [v1_00_01_07](CHANGELOG.md#v1_00_01_07---2026-07-24)**
 
+The Debian 13 ARM64 release uses the ready-made
+[IROS2_0 v0.1.1](https://github.com/Drone-Age/iros2_0/releases/tag/v0.1.1)
+ROS 2 Jazzy underlay. Docker verifies the package SHA-256 and builds only the
+VINS overlay; the resulting `vins-mono-ros2` package depends on the exact
+`iros2-0` Debian package version. Because IROS2_0 does not ship `cv_bridge`,
+the release overlay builds `cv_bridge` 4.1.0 from its pinned upstream Git SHA.
+
 ## Документація українською
 
 - [Посібник користувача: встановлення, конфігурація, запуск і діагностика](docs/README_UK.md)
@@ -9,6 +16,8 @@
 - [Журналювання, рівні, період INFO та формати станів](docs/LOGGING_UK.md)
 - [Історія змін](CHANGELOG.md)
 - [Стандарти розробки та версіонування](docs/DEVELOPMENT_STANDARDS_UK.md)
+- [Стандарт передрелізного тестування](docs/PRE_RELEASE_TESTING_UK.md)
+- [Стандарт випуску релізів](docs/RELEASE_PROCESS_UK.md)
 
 **New: Code has been adapted for Ubuntu 24.04. See the ros2_jazzy branch for details.**
 # 1. Introduction

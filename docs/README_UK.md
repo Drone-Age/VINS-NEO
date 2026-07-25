@@ -72,7 +72,7 @@ pkg-config --modversion opencv4
 
 ```bash
 cd ~/vins_ws
-source /opt/ros/jazzy/setup.bash
+source /opt/iros2_0/jazzy/setup.bash
 colcon build --symlink-install --executor sequential
 source install/setup.bash
 ```
@@ -84,7 +84,7 @@ source install/setup.bash
 
 ```bash
 cd ~/vins_ws
-source /opt/ros/jazzy/setup.bash
+source /opt/iros2_0/jazzy/setup.bash
 colcon build \
   --symlink-install \
   --executor sequential \

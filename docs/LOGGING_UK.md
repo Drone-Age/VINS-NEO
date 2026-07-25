@@ -80,7 +80,7 @@ parameters=[{
 
 ```bash
 cd ~/vins_ws
-source /opt/ros/jazzy/setup.bash
+source /opt/iros2_0/jazzy/setup.bash
 colcon build \
   --symlink-install \
   --executor sequential \

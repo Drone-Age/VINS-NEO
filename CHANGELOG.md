@@ -10,6 +10,12 @@ two-digit zero-padded components after the major version.
 
 ### Added
 
+- Added reproducible Debian 13 ARM64 release and runtime Docker workflows based
+  on the published IROS2_0 `0.1.1-1+deb13` package.
+- Added a ready-package runtime test stack for launching the feature tracker,
+  estimator, RViz, and ROS 2 bag playback without recompiling VINS.
+- Added the pinned `cv_bridge` 4.1.0 overlay because it is not included in the
+  IROS2_0 runtime package.
 - The successful initialization report now includes compact motion-dependent
   diagnostics: metric scale, IMU excitation, visual parallax, gravity before
   world-frame alignment, and the initial alignment orientation.
