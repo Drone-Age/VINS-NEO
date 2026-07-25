@@ -22,6 +22,19 @@ x-vins-runtime: &vins-runtime
     - ${VINS_DATA_DIR:-./data}:/data:ro
 
 services:
+  manual:
+    <<: *vins-runtime
+    profiles:
+      - manual
+    stdin_open: true
+    tty: true
+    volumes:
+      - ${VINS_DATA_DIR:-./data}:/data:ro
+      - ${VINS_CONFIG_DIR:-./runtime-config}:/config
+    command:
+      - sleep
+      - infinity
+
   tracker:
     <<: *vins-runtime
     command:

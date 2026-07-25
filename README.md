@@ -11,6 +11,9 @@ the release overlay builds `cv_bridge` 4.1.0 from its pinned upstream Git SHA.
 The runtime Docker workflow downloads the published VINS package and verifies
 its SHA-256 instead of using an unverified local artifact.
 
+For a fully manual runtime test (tracker, estimator, bag and diagnostics in
+separate terminals), see [docs/MANUAL_RUNTIME_TEST_UK.md](docs/MANUAL_RUNTIME_TEST_UK.md).
+
 ## Документація українською
 
 - [Посібник користувача: встановлення, конфігурація, запуск і діагностика](docs/README_UK.md)

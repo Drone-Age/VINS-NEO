@@ -28,6 +28,7 @@ __pycache__/
 data/
 output/
 results/
+runtime-config/*.yaml
 *.log
 *.bag
 *.bag.active
