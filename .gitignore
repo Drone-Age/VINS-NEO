@@ -29,6 +29,7 @@ data/
 output/
 results/
 runtime-config/*.yaml
+config/native/native.env
 *.log
 *.bag
 *.bag.active
