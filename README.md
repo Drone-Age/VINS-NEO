@@ -1,23 +1,18 @@
 # VINS-MONO-ROS2
 ## ROS2 version of VINS-MONO
-**Current version: [v1_00_01_07](CHANGELOG.md#v1_00_01_07---2026-07-24)**
+**Current version: [v1_00_02_00](CHANGELOG.md#v1_00_02_00---2026-07-26)**
 
 The Debian 13 ARM64 release uses the ready-made
-[IROS2_0 v0.1.1](https://github.com/Drone-Age/iros2_0/releases/tag/v0.1.1)
-ROS 2 Jazzy underlay. Docker verifies the package SHA-256 and builds only the
-VINS overlay; the resulting `vins-mono-ros2` package depends on the exact
-`iros2-0` Debian package version. Because IROS2_0 does not ship `cv_bridge`,
-the release overlay builds `cv_bridge` 4.1.0 from its pinned upstream Git SHA.
-The runtime Docker workflow downloads the published VINS package and verifies
-its SHA-256 instead of using an unverified local artifact.
-
-For a fully manual runtime test (tracker, estimator, bag and diagnostics in
-separate terminals), see [docs/MANUAL_RUNTIME_TEST_UK.md](docs/MANUAL_RUNTIME_TEST_UK.md).
+[IROS2_0 v0.1.2](https://github.com/Drone-Age/iros2_0/releases/tag/v0.1.2)
+ROS 2 Jazzy underlay. The native release workflow verifies the package
+SHA-256 and builds only the VINS overlay; the resulting `vins-mono-ros2`
+package depends on the exact `iros2-0` Debian package version. Because
+IROS2_0 does not ship `cv_bridge`, the release overlay builds `cv_bridge`
+4.1.0 from its pinned upstream Git SHA.
 
 ## Документація українською
 
 - [Посібник користувача: встановлення, конфігурація, запуск і діагностика](docs/README_UK.md)
-- [Docker: розгортання, ARM64/Raspberry Pi, shell і тестування](docs/DOCKER_UK.md)
 - [Журналювання, рівні, період INFO та формати станів](docs/LOGGING_UK.md)
 - [Історія змін](CHANGELOG.md)
 - [Стандарти розробки та версіонування](docs/DEVELOPMENT_STANDARDS_UK.md)
@@ -53,11 +48,9 @@ This repository implements the ROS2 version of VINS-MONO, mainly including the f
 
 ## Docker (Windows 11, Linux, macOS)
 
-Docker provides the supported Ubuntu 24.04 and ROS 2 Jazzy environment on any
-host operating system. The complete Ukrainian guide is available in
-[docs/DOCKER_UK.md](docs/DOCKER_UK.md). On Windows 11, install Docker Desktop,
-enable the WSL 2 backend, then run these commands from PowerShell in the
-repository directory:
+Docker provides an Ubuntu 24.04 and ROS 2 Jazzy development environment.
+On Windows 11, install Docker Desktop, enable the WSL 2 backend, then run
+these commands from PowerShell in the repository directory:
 
 ```powershell
 docker compose build
@@ -70,18 +63,6 @@ For an interactive ROS 2 shell:
 ```powershell
 docker compose run --rm vins shell
 ```
-
-To create and run the ARM64 development environment locally without compiling
-VINS, use the ARM64 Compose override:
-
-```powershell
-docker compose -f compose.yaml -f compose.arm64.yaml build
-docker compose -f compose.yaml -f compose.arm64.yaml run --rm vins uname -m
-```
-
-The expected architecture is `aarch64`. Docker Desktop uses ARM64 emulation on
-an x86-64 Windows host; the resulting image can later be transferred to a
-64-bit Raspberry Pi.
 
 The source directory is mounted into the container. Docker named volumes retain
 `build`, `install`, and `log`, so subsequent builds are incremental. To mount a

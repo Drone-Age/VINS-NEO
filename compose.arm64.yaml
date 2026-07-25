@@ -1,8 +1,0 @@
-services:
-  vins:
-    platform: linux/arm64
-    build:
-      target: development
-      platforms:
-        - linux/arm64
-    image: vins-mono-ros2:jazzy-arm64-dev

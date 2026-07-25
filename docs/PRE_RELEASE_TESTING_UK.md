@@ -10,16 +10,13 @@
 - Debian 13 Trixie;
 - архітектури `arm64`;
 - OpenCV 4.10;
-- ROS 2 Jazzy з пакета IROS2_0 `iros2-0_0.1.1-1+deb13_arm64.deb`;
+- ROS 2 Jazzy з пакета IROS2_0 `iros2-0_0.1.2-1+deb13_arm64.deb`;
 - C++17 і системного toolchain Debian 13.
 
 Збірка релізного `.deb` і всі обов’язкові передрелізні тести виконуються лише
 на нативній цільовій ARM64-системі. Збірка під Ubuntu, у Docker, через
 ARM64-емуляцію на x86-64 або cross-compilation не є доказом сумісності з
 Raspberry Pi OS і не може пройти release gate.
-
-Docker та CI дозволені лише як додаткові перевірки під час розробки. Їхні
-результати не замінюють жодної обов’язкової нативної перевірки.
 
 ## 2. Обов’язкові перевірки
 
@@ -79,7 +76,7 @@ Docker та CI дозволені лише як додаткові переві�
 1. Пакет встановлюється через `apt install ./<package>.deb`.
 2. `dpkg -s vins-mono-ros2` повертає `install ok installed`.
 3. Після sourcing profile доступний `ros2`.
-4. `dpkg-query` підтверджує встановлення `iros2-0` версії `0.1.1-1+deb13`.
+4. `dpkg-query` підтверджує встановлення `iros2-0` версії `0.1.2-1+deb13`.
 5. ROS знаходить `vins_estimator` і `feature_tracker`.
 6. `vins_estimator --version` відповідає релізу.
 7. `ldd` на Raspberry не показує відсутніх бібліотек.
@@ -124,6 +121,5 @@ release-коміті. Перед створенням коміту staged metada
   -Index -ReleaseTag <RELEASE_TAG> -VerifyAsset
 ```
 
-Windows PowerShell scripts `tools/test-release.ps1` і
-`tools/build-arm64-deb.ps1`, Docker Compose, WSL, емуляція та
-cross-compilation не є релізним workflow.
+Інших ARM64 release workflow у репозиторії немає: реліз виконується лише
+через `tools/invoke-native-release.ps1` і `tools/native-release.sh`.

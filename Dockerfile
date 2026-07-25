@@ -48,7 +48,7 @@ ENV BASH_ENV=/usr/local/share/vins/bash_env.sh
 
 FROM dependencies AS deb-build
 
-ARG PACKAGE_VERSION=1.0.1.7
+ARG PACKAGE_VERSION=1.0.2.0
 
 COPY . ${VINS_WS}
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \

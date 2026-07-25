@@ -6,7 +6,8 @@ param(
     [switch]$PreflightOnly,
     [switch]$InstallDependencies,
     [switch]$InstallTest,
-    [switch]$DatasetTest
+    [switch]$DatasetTest,
+    [switch]$SkipTests
 )
 
 $ErrorActionPreference = "Stop"
@@ -233,6 +234,7 @@ try {
         )
         if ($InstallDependencies) { $arguments += "--install-dependencies" }
         if ($InstallTest) { $arguments += "--install-test" }
+        if ($SkipTests) { $arguments += "--skip-tests" }
         if ($DatasetTest) {
             $arguments += @(
                 "--dataset-test",

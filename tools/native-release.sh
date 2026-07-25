@@ -22,6 +22,7 @@ Optional:
   --install-dependencies       install Debian build dependencies with apt
   --install-test               install the generated package and smoke-test it
   --dataset-test               run the configured VINS dataset test runner
+  --skip-tests                 build and package without test execution
   --vins-config FILE           VINS YAML used by the dataset test
   --dataset PATH               bag file or directory containing data.bag
   --dataset-runner FILE        vins_test.py path
@@ -42,6 +43,7 @@ opencv_version=
 install_dependencies=false
 install_test=false
 dataset_test=false
+skip_tests=false
 vins_config=
 dataset=
 dataset_runner=
@@ -62,6 +64,7 @@ while (($#)); do
     --install-dependencies) install_dependencies=true; shift ;;
     --install-test) install_test=true; shift ;;
     --dataset-test) dataset_test=true; shift ;;
+    --skip-tests) skip_tests=true; shift ;;
     --vins-config) vins_config=$2; shift 2 ;;
     --dataset) dataset=$2; shift 2 ;;
     --dataset-runner) dataset_runner=$2; shift 2 ;;
@@ -104,6 +107,14 @@ step() {
 fail() {
   printf 'ERROR: %s\n' "$*" >&2
   exit 1
+}
+
+source_setup() {
+  local setup_file=$1
+  set +u
+  # ROS/colcon setup scripts may read optional variables such as COLCON_TRACE.
+  source "$setup_file"
+  set -u
 }
 
 on_error() {
@@ -183,7 +194,7 @@ step "Verify IROS and native ABI"
 installed_iros=$(dpkg-query -W -f='${Version}' iros2-0)
 [[ $installed_iros == "$iros_deb_version" ]] ||
   fail "iros2-0 is $installed_iros; expected $iros_deb_version"
-source /opt/iros2_0/jazzy/setup.bash
+source_setup /opt/iros2_0/jazzy/setup.bash
 installed_opencv=$(pkg-config --modversion opencv4)
 [[ $installed_opencv == "$opencv_version" ]] ||
   fail "OpenCV is $installed_opencv; expected $opencv_version"
@@ -225,7 +236,7 @@ colcon build \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib
 
 step "Build VINS packages in Release mode"
-source "$install_prefix/setup.bash"
+source_setup "$install_prefix/setup.bash"
 colcon build \
   --base-paths "$source_dir" \
   --build-base "$vins_build" \
@@ -235,17 +246,22 @@ colcon build \
   --event-handlers console_direct+ \
   --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_LIBDIR=lib
 
-step "Run colcon tests"
-source "$install_prefix/setup.bash"
-colcon test \
-  --base-paths "$source_dir" \
-  --build-base "$vins_build" \
-  --install-base "$install_prefix" \
-  --merge-install \
-  --executor sequential \
-  --event-handlers console_direct+
-colcon test-result --test-result-base "$vins_build" --verbose |
-  tee "$evidence_dir/colcon-test-result.txt"
+if ! $skip_tests; then
+  step "Run colcon tests"
+  source_setup "$install_prefix/setup.bash"
+  colcon test \
+    --base-paths "$source_dir" \
+    --build-base "$vins_build" \
+    --install-base "$install_prefix" \
+    --merge-install \
+    --executor sequential \
+    --event-handlers console_direct+
+  colcon test-result --test-result-base "$vins_build" --verbose |
+    tee "$evidence_dir/colcon-test-result.txt"
+else
+  step "Skip tests by release operator decision"
+  printf 'SKIPPED\n' | tee "$evidence_dir/test-status.txt"
+fi
 
 step "Verify product version and ELF dependencies"
 version_output=$(ros2 run vins_estimator vins_estimator --version)
@@ -305,8 +321,8 @@ if $install_test; then
   sudo -n apt-get install -y "$artifact"
   dpkg-query -W -f='${Status}\n' vins-mono-ros2 |
     grep -Fx 'install ok installed'
-  source /opt/iros2_0/jazzy/setup.bash
-  source /opt/vins/setup.bash
+  source_setup /opt/iros2_0/jazzy/setup.bash
+  source_setup /opt/vins/setup.bash
   ros2 pkg prefix vins_estimator
   ros2 pkg prefix feature_tracker
   [[ $(ros2 run vins_estimator vins_estimator --version) == "$expected_version" ]]
@@ -322,8 +338,30 @@ if $dataset_test; then
   bag=$dataset
   [[ -d $bag ]] && bag="$bag/data.bag"
   [[ -e $bag ]] || fail "Dataset bag does not exist: $bag"
-  python3 "$dataset_runner" --ros2 \
-    --config "$vins_config" \
+  dataset_config="$work_dir/dataset-config.yaml"
+  dataset_test_json="$work_dir/dataset-test.json"
+  cp "$vins_config" "$dataset_config"
+  cat >"$dataset_test_json" <<'EOF'
+{
+  "objective": "delta_xy",
+  "parameters": {
+    "acc_n": {
+      "step": 0.001,
+      "min_step": 0.001,
+      "max_fails": 0,
+      "max_trials": 1,
+      "max_step_reductions": 0
+    }
+  },
+  "test": {
+    "repeats": 1,
+    "aggregation": "median"
+  }
+}
+EOF
+  python3 "$dataset_runner" --ros2 -param acc_n \
+    --test-json "$dataset_test_json" \
+    --config "$dataset_config" \
     --bag "$bag" \
     --ros-setup /opt/iros2_0/jazzy/setup.bash \
     --vins-setup /opt/vins/setup.bash |
