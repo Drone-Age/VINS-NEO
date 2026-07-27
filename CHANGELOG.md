@@ -6,6 +6,16 @@ The product version uses four numeric components: `MAJOR.MINOR.FEATURE.PATCH`.
 Git tags use the corresponding `vMAJOR_MINOR_FEATURE_PATCH` format, with
 two-digit zero-padded components after the major version.
 
+## Process [1.0.0] - 2026-07-28
+
+### Added
+
+- Added independent process versioning for regulations and release tooling.
+- Aligned task tracking, evidence states, native release gates, immutable tags,
+  and post-release verification with the iROS2 and iMAVROS process contract.
+- Established canonical English and mandatory Ukrainian normative
+  documentation, with an explicit migration rule for legacy `*_UK.md` files.
+
 ## [v1_00_02_00] - 2026-07-26
 
 ### Changed

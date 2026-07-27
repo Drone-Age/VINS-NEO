@@ -1,5 +1,25 @@
 # Repository instructions
 
+## Normative documentation
+
+- Read `docs/README.md` and `docs/PROCESS_GOVERNANCE.md` before material
+  implementation, process, packaging, test, or release work.
+- English normative documents are canonical for automation and
+  machine-facing interpretation. Ukrainian `.uk.md` counterparts are
+  mandatory and must be updated in the same commit.
+- Follow `docs/DOCUMENTATION_POLICY.md` for document changes and
+  `docs/VERSIONING.md` for product and process version changes.
+- GitHub is authoritative for repository state and technical evidence.
+  ClickUp is authoritative for planning state, ownership, priority, and
+  cross-component coordination.
+- A material task must have a linked GitHub Issue and ClickUp task before
+  implementation. Do not create duplicate work items when the linkage is
+  unclear.
+- Do not mark a task or release complete until its documented gates,
+  immutable evidence, publication checks, and tracker state are all verified.
+- Existing `*_UK.md` files are legacy Ukrainian-only documents governed by
+  the migration rules in `docs/DOCUMENTATION_POLICY.md`.
+
 ## Native ARM64 release builds
 
 When the user asks to build, rebuild, test, or reproduce a native release:
