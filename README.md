@@ -1,14 +1,13 @@
 # VINS-MONO-ROS2
 ## ROS2 version of VINS-MONO
-**Current version: [v1_00_02_00](CHANGELOG.md#v1_00_02_00---2026-07-26)**
+**Current published version: [v1_00_02_00](CHANGELOG.md#v1_00_02_00---2026-07-26)**
 
-The Debian 13 ARM64 release uses the ready-made
-[IROS2_0 v0.1.2](https://github.com/Drone-Age/iros2_0/releases/tag/v0.1.2)
-ROS 2 Jazzy underlay. The native release workflow verifies the package
-SHA-256 and builds only the VINS overlay; the resulting `vins-mono-ros2`
-package depends on the exact `iros2-0` Debian package version. Because
-IROS2_0 does not ship `cv_bridge`, the release overlay builds `cv_bridge`
-4.1.0 from its pinned upstream Git SHA.
+The next release, VINS-NEO 1.0.3.0, consumes the signed split-package
+[`iros2j` 1.0.3](https://github.com/Drone-Age/iros2_0/releases/tag/v2.1.0.3)
+ROS 2 Jazzy APT snapshot at `/opt/iros2j` and is integration-pinned to
+iMAVROS 1.0.0.2 at `/opt/imavros`. `cv_bridge`, `image_transport`, and the
+remaining ROS dependency closure come from exact `iros2j-*` packages.
+`/opt/vins` contains only VINS-owned packages.
 
 ## Документація українською
 
@@ -19,10 +18,10 @@ IROS2_0 does not ship `cv_bridge`, the release overlay builds `cv_bridge`
 - [Журналювання, рівні, період INFO та формати станів](docs/LOGGING_UK.md)
 - [Історія змін](CHANGELOG.md)
 - [Стандарти розробки та версіонування](docs/DEVELOPMENT_STANDARDS_UK.md)
-- [Стандарт передрелізного тестування](docs/PRE_RELEASE_TESTING_UK.md)
-- [Стандарт випуску релізів](docs/RELEASE_PROCESS_UK.md)
-- [Параметри нативної ARM64-системи](config/native/README_UK.md)
-- [Маніфести залежностей релізів](config/releases/README_UK.md)
+- [Стандарт передрелізного тестування](docs/PRE_RELEASE_TESTING.uk.md)
+- [Стандарт випуску релізів](docs/RELEASE_PROCESS.uk.md)
+- [Параметри нативної ARM64-системи](config/native/README.uk.md)
+- [Маніфести залежностей релізів](config/releases/README.uk.md)
 
 **New: Code has been adapted for Ubuntu 24.04. See the ros2_jazzy branch for details.**
 # 1. Introduction

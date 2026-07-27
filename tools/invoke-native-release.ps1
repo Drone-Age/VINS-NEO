@@ -6,8 +6,10 @@ param(
     [switch]$PreflightOnly,
     [switch]$InstallDependencies,
     [switch]$InstallTest,
+    [switch]$IntegrationTest,
     [switch]$DatasetTest,
-    [switch]$SkipTests
+    [switch]$SkipTests,
+    [switch]$WorkingTree
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,6 +77,11 @@ try {
     } else {
         "22"
     }
+    $nativeIdentityFile = if ($hostConfig.ContainsKey("NATIVE_IDENTITY_FILE")) {
+        $hostConfig["NATIVE_IDENTITY_FILE"]
+    } else {
+        ""
+    }
     $outputDirectory = Require-Value $hostConfig "OUTPUT_DIR"
     $null = Require-Value $hostConfig "NATIVE_UNAME_ARCH"
     $null = Require-Value $hostConfig "NATIVE_DEB_ARCH"
@@ -83,6 +90,9 @@ try {
     Assert-SafeValue "NATIVE_USER" $nativeUser '^[A-Za-z_][A-Za-z0-9_-]*$'
     Assert-SafeValue "NATIVE_SSH_PORT" $nativePort '^\d{1,5}$'
     Assert-SafeValue "OUTPUT_DIR" $outputDirectory '^/[A-Za-z0-9._/-]+$'
+    if ($nativeHost -ne "192.168.144.106" -or $nativeUser -ne "rpi") {
+        throw "Native target must be exactly rpi@192.168.144.106."
+    }
 
     if (-not $GitRef) {
         $GitRef = (
@@ -110,8 +120,18 @@ try {
     }
     Assert-SafeValue "release tag" $ReleaseTag '^v\d+_\d{2}_\d{2}_\d{2}$'
 
-    & "$PSScriptRoot/check-release-metadata.ps1" `
-        -GitRef $GitRef -ReleaseTag $ReleaseTag | Out-Host
+    $metadataArguments = @{
+        GitRef = $GitRef
+        ReleaseTag = $ReleaseTag
+    }
+    if ($WorkingTree) {
+        $metadataArguments["Index"] = $true
+        Write-Warning (
+            "Working-tree diagnostic mode is not final release evidence. " +
+            "Repeat against the committed release tag before publication."
+        )
+    }
+    & "$PSScriptRoot/check-release-metadata.ps1" @metadataArguments | Out-Host
     if ($LASTEXITCODE -ne 0) {
         throw "Release metadata gate failed."
     }
@@ -119,20 +139,33 @@ try {
     $manifestPath = "config/releases/$ReleaseTag.env"
     $manifest = Read-EnvFile $manifestPath
     foreach ($required in @(
+        "MANIFEST_SCHEMA",
         "PRODUCT_VERSION",
         "RELEASE_TAG",
         "IROS_VERSION",
         "IROS_DEB_VERSION",
+        "IROS_SOURCE_TAG",
+        "IROS_SOURCE_COMMIT",
         "IROS_RELEASE_URL",
         "IROS_ASSET_URL",
         "IROS_SHA256",
-        "CV_BRIDGE_REF",
+        "IROS_PREFIX",
+        "IROS_PACKAGES",
+        "IROS_RUNTIME_PACKAGES",
+        "IMAVROS_VERSION",
+        "IMAVROS_DEB_VERSION",
+        "IMAVROS_TAG",
+        "IMAVROS_COMMIT",
+        "IMAVROS_PREFIX",
         "OPENCV_VERSION"
     )) {
         $null = Require-Value $manifest $required
     }
     if ($manifest["RELEASE_TAG"] -ne $ReleaseTag) {
         throw "Release manifest tag does not match $ReleaseTag."
+    }
+    if ($manifest["MANIFEST_SCHEMA"] -ne "2") {
+        throw "Native iros2j release requires MANIFEST_SCHEMA=2."
     }
 
     $target = "${nativeUser}@${nativeHost}"
@@ -141,6 +174,19 @@ try {
         "-o", "ConnectTimeout=10",
         "-p", $nativePort
     )
+    $scpOptions = @(
+        "-o", "BatchMode=yes",
+        "-o", "ConnectTimeout=10",
+        "-P", $nativePort
+    )
+    if (-not [string]::IsNullOrWhiteSpace($nativeIdentityFile)) {
+        if (-not (Test-Path -LiteralPath $nativeIdentityFile -PathType Leaf)) {
+            throw "NATIVE_IDENTITY_FILE does not exist: $nativeIdentityFile"
+        }
+        $nativeIdentityFile = (Resolve-Path -LiteralPath $nativeIdentityFile).Path
+        $sshOptions += @("-o", "IdentitiesOnly=yes", "-i", $nativeIdentityFile)
+        $scpOptions += @("-o", "IdentitiesOnly=yes", "-i", $nativeIdentityFile)
+    }
 
     Write-Host "Native target: $target"
     Write-Host "Release: $ReleaseTag ($($manifest['PRODUCT_VERSION']))"
@@ -154,10 +200,17 @@ try {
         "mkdir -p '$outputDirectory'"
     )
     if (-not $InstallDependencies) {
+        $packageChecks = $manifest["IROS_PACKAGES"].Split(",") |
+            ForEach-Object {
+                "test `"`$(dpkg-query -W -f='`${Version}' '$_')`" = " +
+                "`"$($manifest['IROS_DEB_VERSION'])`""
+            }
         $preflight += @(
-            "test -f /opt/iros2_0/jazzy/setup.bash",
-            "test `"`$(dpkg-query -W iros2-0 | cut -f2)`" = `"$($manifest['IROS_DEB_VERSION'])`""
+            "test ! -e /opt/iros2_0",
+            "! dpkg-query -W iros2-0 >/dev/null 2>&1",
+            "test -f /opt/iros2j/setup.bash"
         )
+        $preflight += $packageChecks
     }
     $preflight = $preflight -join "; "
     Write-Verbose "Remote preflight: $preflight"
@@ -183,9 +236,17 @@ try {
         $sourceArchive = Join-Path $temporaryDirectory "source.tar"
         $nativeScript = Join-Path $repoRoot "tools/native-release.sh"
 
-        git archive --format=tar --output=$sourceArchive $GitRef
+        if ($WorkingTree) {
+            $archiveFiles = @(git ls-files --cached --others --exclude-standard)
+            if ($LASTEXITCODE -ne 0 -or $archiveFiles.Count -eq 0) {
+                throw "Failed to enumerate working-tree source files."
+            }
+            & tar -cf $sourceArchive -- @archiveFiles
+        } else {
+            git archive --format=tar --output=$sourceArchive $GitRef
+        }
         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to archive Git revision $GitRef."
+            throw "Failed to archive the requested source state."
         }
 
         & ssh @sshOptions $target (
@@ -195,13 +256,13 @@ try {
             throw "Failed to create the isolated remote release directory."
         }
 
-        & scp -P $nativePort -q -- $sourceArchive (
+        & scp @scpOptions -q -- $sourceArchive (
             "${target}:$remoteRunDirectory/source.tar"
         )
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to transfer the source archive."
         }
-        & scp -P $nativePort -q -- $nativeScript (
+        & scp @scpOptions -q -- $nativeScript (
             "${target}:$remoteRunDirectory/native-release.sh"
         )
         if ($LASTEXITCODE -ne 0) {
@@ -227,13 +288,23 @@ try {
             "--commit", "'$commit'",
             "--iros-version", "'$($manifest['IROS_VERSION'])'",
             "--iros-deb-version", "'$($manifest['IROS_DEB_VERSION'])'",
+            "--iros-source-tag", "'$($manifest['IROS_SOURCE_TAG'])'",
+            "--iros-source-commit", "'$($manifest['IROS_SOURCE_COMMIT'])'",
             "--iros-asset-url", "'$($manifest['IROS_ASSET_URL'])'",
             "--iros-sha256", "'$($manifest['IROS_SHA256'])'",
-            "--cv-bridge-ref", "'$($manifest['CV_BRIDGE_REF'])'",
+            "--iros-packages", "'$($manifest['IROS_PACKAGES'])'",
+            "--iros-runtime-packages",
+                "'$($manifest['IROS_RUNTIME_PACKAGES'])'",
+            "--imavros-version", "'$($manifest['IMAVROS_VERSION'])'",
+            "--imavros-deb-version", "'$($manifest['IMAVROS_DEB_VERSION'])'",
+            "--imavros-tag", "'$($manifest['IMAVROS_TAG'])'",
+            "--imavros-commit", "'$($manifest['IMAVROS_COMMIT'])'",
+            "--imavros-prefix", "'$($manifest['IMAVROS_PREFIX'])'",
             "--opencv-version", "'$($manifest['OPENCV_VERSION'])'"
         )
         if ($InstallDependencies) { $arguments += "--install-dependencies" }
         if ($InstallTest) { $arguments += "--install-test" }
+        if ($IntegrationTest) { $arguments += "--integration-test" }
         if ($SkipTests) { $arguments += "--skip-tests" }
         if ($DatasetTest) {
             $arguments += @(
