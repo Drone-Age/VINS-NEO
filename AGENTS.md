@@ -51,8 +51,11 @@ When preparing or committing a new VINS product version:
    commit. Never defer the iROS2 choice until build or tag creation.
 2. Add `config/releases/<RELEASE_TAG>.env` to the same commit as the CMake
    version, `version.h.in` tag, and `CHANGELOG.md` release entry.
-3. Record the exact iROS2 release URL, ARM64 Debian asset URL, Debian version,
-   SHA-256, OpenCV version, and pinned `cv_bridge` Git SHA.
+3. For schema 2, record the exact signed `iros2j` APT snapshot URL and
+   SHA-256, source tag/commit, Debian version, package closure and prefix;
+   record the compatible iMAVROS artifact identity and OpenCV version.
+   `cv_bridge` MUST come from `iros2j-cv-bridge`; do not pin or build a
+   private `vision_opencv` checkout.
 4. Before committing, stage all release metadata and run:
    `tools/check-release-metadata.ps1 -Index -ReleaseTag <TAG> -VerifyAsset`.
 5. After committing and before tagging, run:

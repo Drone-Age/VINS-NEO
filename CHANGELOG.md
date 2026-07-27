@@ -6,6 +6,31 @@ The product version uses four numeric components: `MAJOR.MINOR.FEATURE.PATCH`.
 Git tags use the corresponding `vMAJOR_MINOR_FEATURE_PATCH` format, with
 two-digit zero-padded components after the major version.
 
+## [v1_00_03_00] - Unreleased
+
+### Changed
+
+- Migrated the release contract to the signed split-package `iros2j` 1.0.3
+  snapshot under `/opt/iros2j`, compatible with iMAVROS 1.0.0.2.
+- Declared the exact `iros2j-*` package closure required by VINS instead of
+  depending on the obsolete monolithic `iros2-0` package.
+
+### Removed
+
+- Removed the release-manifest contract for a private `cv_bridge` overlay;
+  `cv_bridge` is supplied by `iros2j-cv-bridge`.
+
+## Process [1.1.0] - Unreleased
+
+### Changed
+
+- Added the schema 2 signed `iros2j` APT snapshot and iMAVROS compatibility
+  contract to release metadata, native dispatch, package ownership audits,
+  integration activation, and paired normative documentation.
+- Retained schema 1 validation only for immutable historical releases.
+- Added reproducible ROS 2 dataset/odometry and configured Pi camera/FCU
+  hardware acceptance gates.
+
 ## Process [1.0.0] - 2026-07-28
 
 ### Added

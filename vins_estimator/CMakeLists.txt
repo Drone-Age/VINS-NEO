@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(vins_estimator VERSION 1.0.2.0)
+project(vins_estimator VERSION 1.0.3.0)
 
 set(CMAKE_BUILD_TYPE "Release")
 set(CMAKE_CXX_STANDARD 17)
