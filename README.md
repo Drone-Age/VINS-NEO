@@ -2,6 +2,14 @@
 ## ROS2 version of VINS-MONO
 **Current published version: [v1_00_02_00](CHANGELOG.md#v1_00_02_00---2026-07-26)**
 
+## Набори даних / Datasets
+
+- [DataSetsManager/client](https://github.com/DataSetsManager/client) — CLI,
+  VINS configurations і dataset catalog / CLI, VINS configurations, and dataset catalog.
+- [DataSetsManager/server](https://github.com/DataSetsManager/server) — Web catalog,
+  HTTP API та авторизовані artifacts / Web catalog, HTTP API, and authenticated artifacts.
+- [Документація й ITSM / Documentation and ITSM](https://github.com/DataSetsManager/DataSetsManager).
+
 The next release, VINS-NEO 1.0.3.0, consumes the signed split-package
 [`iros2j` 1.0.3](https://github.com/Drone-Age/iros2_0/releases/tag/v2.1.0.3)
 ROS 2 Jazzy APT snapshot at `/opt/iros2j` and is integration-pinned to
