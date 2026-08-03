@@ -326,14 +326,17 @@ void relocalization_callback(const sensor_msgs::msg::PointCloud::SharedPtr point
 // thread: visual-inertial odometry
 void process()
 {
-    while (true)
+    while (rclcpp::ok())
     {
         std::vector<std::pair<std::vector<sensor_msgs::msg::Imu::SharedPtr>, sensor_msgs::msg::PointCloud::SharedPtr>> measurements;
         std::unique_lock<std::mutex> lk(m_buf);
         con.wait(lk, [&]
                  {
-            return (measurements = getMeasurements()).size() != 0;
+            return !rclcpp::ok() || (measurements = getMeasurements()).size() != 0;
                  });
+
+        if (!rclcpp::ok())
+            break;
 
         lk.unlock();
         m_estimator.lock();
@@ -520,6 +523,16 @@ int main(int argc, char **argv)
 
     std::thread measurement_process{process};
     rclcpp::spin(n);
+    con.notify_all();
+    measurement_process.join();
+    sub_relo_points.reset();
+    sub_restart.reset();
+    sub_image.reset();
+    sub_imu.reset();
+    waiting_status_timer.reset();
+    unregisterPub();
+    estimator_node.reset();
+    n.reset();
 
     return 0;
 }

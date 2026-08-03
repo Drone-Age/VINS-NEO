@@ -15,20 +15,29 @@ process governance.
 | Package | ARM64 metadata, точні залежності, portability, checksum і повний ELF linkage проходять. |
 | Install | Clean APT install і clean-shell VINS smoke проходять. |
 | Integration | `/opt/iros2j`, `/opt/imavros`, `/opt/vins` активуються саме в цьому порядку; Fast DDS, topics, QoS, timestamps і frames проходять. |
-| Dataset | Контрольований VINS dataset проходить на налаштованій Raspberry Pi 5. |
+| Dataset | Підготовлений незмінний DSM run-manifest проходить VINS-owned runner на налаштованій Raspberry Pi 5. |
 | Post-release | Опубліковані checksum, reinstall, smoke та integration checks проходять. |
 
 Тривалий звіт ОБОВ’ЯЗКОВО містить test ID, result, timestamps, host, target,
 точну command, commit, dependency identity, evidence path і причину кожного
 результату, відмінного від `PASS`.
 
-Для acceptance-перевірок на налаштованій Raspberry Pi 5 виконайте:
+Для acceptance-перевірки на налаштованій Raspberry Pi 5 підготуйте dataset на
+host через HTTPS, укажіть `DATASET_RUN_MANIFEST` в ignored native environment і
+виконайте:
 
-```bash
-tools/native-dataset-smoke.sh /path/to/ros2_bag /path/to/dataset-evidence
-tools/native-hardware-smoke.sh /path/to/hardware-evidence
+```powershell
+.\tools\invoke-native-release.ps1 `
+  -InstallDependencies -InstallTest -IntegrationTest -DatasetTest
 ```
 
-Dataset gate вимагає `/imu0`, `/cam0/image_raw` та отримане повідомлення
-`/vins_estimator/odometry`. Hardware gate захоплює реальний кадр OV5647 і
-вимагає heartbeat ArduPilot через `/dev/ttyAMA10` на швидкості 460800.
+Dataset gate вимагає ненульові `/imu0` і `/cam0/image_raw`, роботу обох
+VINS-процесів до завершення bag і щонайменше 10 повідомлень
+`/vins_estimator/odometry` зі скінченними значеннями та монотонними timestamps.
+Результат фіксує всі dataset, profile, artifact, configuration, suite та Client
+version inputs. Evidence з Ubuntu AMD64 є лише development evidence; release
+evidence потребує native запуску на Debian 13 ARM64.
+
+Окремий hardware gate запускається як `tools/native-hardware-smoke.sh
+/path/to/hardware-evidence`. Він захоплює реальний кадр OV5647 і вимагає
+heartbeat ArduPilot через `/dev/ttyAMA10` на швидкості 460800.

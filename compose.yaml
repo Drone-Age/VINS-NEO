@@ -2,8 +2,10 @@ name: vins-mono-ros2
 
 services:
   vins:
+    platform: linux/amd64
     build:
       context: .
+      target: development
       args:
         ROS_DISTRO: jazzy
     image: vins-mono-ros2:jazzy

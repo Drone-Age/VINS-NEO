@@ -14,6 +14,11 @@ Before the release commit, `config/releases/<RELEASE_TAG>.env` MUST pin:
   and SHA-256, and `/opt/imavros`;
 - the system OpenCV version.
 
+Before the dataset gate, a host-prepared DataSetsManager run-manifest MUST pin
+the dataset ID and profile, artifact version and source/content SHA-256,
+configuration SHA-256, suite version, and DataSetsManager Client version. The
+dispatcher transfers those verified inputs to the Pi without the DSM token.
+
 Schema 2 MUST NOT contain `CV_BRIDGE_REF`. VINS consumes
 `iros2j-cv-bridge`; it does not clone or build `vision_opencv`.
 
@@ -25,14 +30,17 @@ Schema 2 MUST NOT contain `CV_BRIDGE_REF`. VINS consumes
    -VerifyAsset`.
 3. Review and commit the complete release change.
 4. Run `tools/check-release-metadata.ps1 -GitRef HEAD -ReleaseTag <TAG>`.
-5. Run the native Debian 13 ARM64 workflow with
+5. Prepare `iv.dev.4.ff.1` through the HTTPS DSM endpoint on the host and set
+   `DATASET_RUN_MANIFEST` in the ignored native environment.
+6. Run the native Debian 13 ARM64 workflow with
    `tools/invoke-native-release.ps1 -InstallDependencies -InstallTest
    -IntegrationTest -DatasetTest`.
-6. Audit the Debian package, clean installation, ELF closure, exact
+7. Audit the Debian package, clean installation, ELF closure, exact
    `iros2j-*` dependencies, and ownership under `/opt/vins`.
-7. Merge the reviewed commit, then create immutable product/process tags and
+8. Verify `dataset-e2e-result.json` is `PASS` with `release` evidence class.
+9. Merge the reviewed commit, then create immutable product/process tags and
    release assets.
-8. Download the published artifact, verify its checksum, reinstall it, and
+10. Download the published artifact, verify its checksum, reinstall it, and
    repeat the smoke and integration checks.
 
 No tag or release may be created while a mandatory gate is `FAIL`, `BLOCKED`,

@@ -244,6 +244,11 @@ int main(int argc, char **argv)
         cv::namedWindow("vis", cv::WINDOW_NORMAL);
     */
     rclcpp::spin(n);
+    sub_img.reset();
+    pub_restart.reset();
+    pub_match.reset();
+    pub_img.reset();
+    n.reset();
     return 0;
 }
 
