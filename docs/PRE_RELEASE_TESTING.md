@@ -15,20 +15,27 @@ state model.
 | Package | ARM64 metadata, exact dependencies, portability, checksum, and complete ELF linkage pass. |
 | Install | Clean APT install and clean-shell VINS smoke pass. |
 | Integration | Source `/opt/iros2j`, `/opt/imavros`, `/opt/vins` in order; Fast DDS, topics, QoS, timestamps, and frames pass. |
-| Dataset | Controlled VINS dataset passes on the configured Raspberry Pi 5. |
+| Dataset | Prepared immutable DSM run-manifest passes the VINS-owned runner on the configured Raspberry Pi 5. |
 | Post-release | Published checksum, reinstall, smoke, and integration checks pass. |
 
 The durable report MUST record test ID, result, timestamps, host, target,
 exact command, commit, dependency identity, evidence path, and a reason for
 every non-`PASS` result.
 
-For configured Raspberry Pi 5 acceptance, run:
+For configured Raspberry Pi 5 acceptance, prepare the dataset on the host over
+HTTPS, set `DATASET_RUN_MANIFEST` in the ignored native environment, and run:
 
-```bash
-tools/native-dataset-smoke.sh /path/to/ros2_bag /path/to/dataset-evidence
-tools/native-hardware-smoke.sh /path/to/hardware-evidence
+```powershell
+.\tools\invoke-native-release.ps1 `
+  -InstallDependencies -InstallTest -IntegrationTest -DatasetTest
 ```
 
-The dataset gate requires `/imu0`, `/cam0/image_raw`, and a produced
-`/vins_estimator/odometry` message. The hardware gate captures a real OV5647
-frame and requires an ArduPilot heartbeat through `/dev/ttyAMA10` at 460800.
+The dataset gate requires non-empty `/imu0` and `/cam0/image_raw`, both VINS
+processes alive until bag completion, and at least 10 finite, timestamp-monotonic
+`/vins_estimator/odometry` messages. The result pins every dataset, profile,
+artifact, configuration, suite, and Client version input. Ubuntu AMD64 evidence
+is development-only; release evidence requires the native Debian 13 ARM64 run.
+
+The separate hardware gate is `tools/native-hardware-smoke.sh
+/path/to/hardware-evidence`. It captures a real OV5647 frame and requires an
+ArduPilot heartbeat through `/dev/ttyAMA10` at 460800.

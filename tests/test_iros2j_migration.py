@@ -87,6 +87,7 @@ class Iros2jMigrationTest(unittest.TestCase):
         pairs = (
             ("docs/RELEASE_PROCESS.md", "docs/RELEASE_PROCESS.uk.md"),
             ("docs/PRE_RELEASE_TESTING.md", "docs/PRE_RELEASE_TESTING.uk.md"),
+            ("docs/DATASET_E2E.md", "docs/DATASET_E2E.uk.md"),
             ("config/native/README.md", "config/native/README.uk.md"),
             ("config/releases/README.md", "config/releases/README.uk.md"),
         )
@@ -101,10 +102,10 @@ class Iros2jMigrationTest(unittest.TestCase):
     def test_process_version_records_contract_change(self) -> None:
         self.assertEqual(
             (ROOT / "PROCESS_VERSION").read_text(encoding="utf-8").strip(),
-            "1.1.0",
+            "1.2.0",
         )
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        self.assertIn("## Process [1.1.0] - Unreleased", changelog)
+        self.assertIn("## Process [1.2.0] - Unreleased", changelog)
 
     def test_native_gate_emits_structured_results(self) -> None:
         for field in (
@@ -130,10 +131,13 @@ class Iros2jMigrationTest(unittest.TestCase):
         dataset = (ROOT / "tools/native-dataset-smoke.sh").read_text(
             encoding="utf-8"
         )
+        runner = (ROOT / "tools/dataset_e2e.py").read_text(encoding="utf-8")
         hardware = (ROOT / "tools/native-hardware-smoke.sh").read_text(
             encoding="utf-8"
         )
-        self.assertIn("/vins_estimator/odometry", dataset)
+        self.assertIn("/vins_estimator/odometry", runner)
+        self.assertIn("dataset_e2e.py", dataset)
+        self.assertIn("--config", dataset)
         self.assertIn("/dev/ttyAMA10:460800", hardware)
         self.assertIn("connected: true", hardware)
 

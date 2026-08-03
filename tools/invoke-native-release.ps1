@@ -8,6 +8,7 @@ param(
     [switch]$InstallTest,
     [switch]$IntegrationTest,
     [switch]$DatasetTest,
+    [string]$DatasetRunManifest,
     [switch]$SkipTests,
     [switch]$WorkingTree
 )
@@ -309,10 +310,82 @@ try {
         if ($DatasetTest) {
             $arguments += @(
                 "--dataset-test",
-                "--vins-config", "'$($hostConfig['VINS_CONFIG'])'",
-                "--dataset", "'$($hostConfig['DATASET'])'",
-                "--dataset-runner", "'$($hostConfig['DATASET_TEST_RUNNER'])'"
+                "--dataset-runner", "'$remoteRunDirectory/source/tools/dataset_e2e.py'"
             )
+            $configuredRunManifest = if ($DatasetRunManifest) {
+                $DatasetRunManifest
+            } elseif ($hostConfig.ContainsKey("DATASET_RUN_MANIFEST")) {
+                $hostConfig["DATASET_RUN_MANIFEST"]
+            } else {
+                ""
+            }
+            if (-not [string]::IsNullOrWhiteSpace($configuredRunManifest)) {
+                $runManifestPath = (Resolve-Path -LiteralPath $configuredRunManifest).Path
+                $runManifest = Get-Content -LiteralPath $runManifestPath -Raw -Encoding UTF8 |
+                    ConvertFrom-Json
+                foreach ($section in "artifact", "config") {
+                    if ($null -eq $runManifest.$section -or
+                        [string]::IsNullOrWhiteSpace($runManifest.$section.path)) {
+                        throw "Prepared run manifest lacks $section.path."
+                    }
+                }
+                $artifactSource = (Resolve-Path -LiteralPath $runManifest.artifact.path).Path
+                $configSource = (Resolve-Path -LiteralPath $runManifest.config.path).Path
+                if (-not (Test-Path -LiteralPath $configSource -PathType Leaf)) {
+                    throw "Prepared VINS config is not a file: $configSource"
+                }
+                $portableRoot = Join-Path $temporaryDirectory "dataset-input"
+                New-Item -ItemType Directory -Path $portableRoot | Out-Null
+                Copy-Item -LiteralPath $artifactSource `
+                    -Destination (Join-Path $portableRoot "artifact") -Recurse
+                Copy-Item -LiteralPath $configSource `
+                    -Destination (Join-Path $portableRoot "config.yaml")
+                $runManifest.artifact.path = "artifact"
+                $runManifest.config.path = "config.yaml"
+                $portableManifest = Join-Path $portableRoot "run-manifest.json"
+                $manifestJson = $runManifest | ConvertTo-Json -Depth 32
+                [System.IO.File]::WriteAllText(
+                    $portableManifest,
+                    $manifestJson + "`n",
+                    [System.Text.UTF8Encoding]::new($false)
+                )
+                $datasetArchive = Join-Path $temporaryDirectory "dataset-input.tar"
+                & tar -cf $datasetArchive -C $portableRoot .
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to create the tokenless dataset input archive."
+                }
+                & ssh @sshOptions $target "mkdir -p '$remoteRunDirectory/dataset-input'"
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to create remote dataset input directory."
+                }
+                & scp @scpOptions -q -- $datasetArchive (
+                    "${target}:$remoteRunDirectory/dataset-input.tar"
+                )
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to transfer the tokenless dataset input archive."
+                }
+                & ssh @sshOptions $target (
+                    "tar -xf '$remoteRunDirectory/dataset-input.tar' " +
+                    "-C '$remoteRunDirectory/dataset-input' && " +
+                    "rm -f '$remoteRunDirectory/dataset-input.tar'"
+                )
+                if ($LASTEXITCODE -ne 0) {
+                    throw "Failed to unpack the remote dataset input archive."
+                }
+                $arguments += @(
+                    "--dataset-run-manifest",
+                    "'$remoteRunDirectory/dataset-input/run-manifest.json'"
+                )
+            } else {
+                Write-Warning (
+                    "VINS_CONFIG/DATASET are deprecated expert overrides. " +
+                    "Prepare DATASET_RUN_MANIFEST on the host through HTTPS."
+                )
+                $arguments += @(
+                    "--vins-config", "'$(Require-Value $hostConfig 'VINS_CONFIG')'",
+                    "--dataset", "'$(Require-Value $hostConfig 'DATASET')'"
+                )
+            }
         }
 
         $remoteCommand = (

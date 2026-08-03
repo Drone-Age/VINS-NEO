@@ -74,5 +74,46 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_test REQUIRED)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  set(REPOSITORY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
+  set(IROS2J_MIGRATION_TESTS
+    test_exact_runtime_identity
+    test_iros2j_dependency_closure_is_exact_and_sorted
+    test_private_cv_bridge_build_is_removed
+    test_active_runtime_paths_use_iros2j
+    test_package_audit_rejects_legacy_and_duplicate_payload
+    test_current_normative_documents_are_paired
+    test_process_version_records_contract_change
+    test_native_gate_emits_structured_results
+    test_configured_acceptance_scripts_are_present
+  )
+  foreach(TEST_METHOD IN LISTS IROS2J_MIGRATION_TESTS)
+    ament_add_test(
+      "repository_${TEST_METHOD}"
+      COMMAND "${Python3_EXECUTABLE}" -m unittest
+        "tests.test_iros2j_migration.Iros2jMigrationTest.${TEST_METHOD}"
+      WORKING_DIRECTORY "${REPOSITORY_ROOT}"
+      TIMEOUT 60
+      GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+    )
+  endforeach()
+  ament_add_test(
+    repository_launch_contract
+    COMMAND "${Python3_EXECUTABLE}" -m unittest tests.test_launch_contract
+    WORKING_DIRECTORY "${REPOSITORY_ROOT}"
+    TIMEOUT 60
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+  )
+  ament_add_test(
+    repository_dataset_e2e_contract
+    COMMAND "${Python3_EXECUTABLE}" -m unittest tests.test_dataset_e2e
+    WORKING_DIRECTORY "${REPOSITORY_ROOT}"
+    TIMEOUT 60
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+  )
+endif()
+
 
 ament_package()

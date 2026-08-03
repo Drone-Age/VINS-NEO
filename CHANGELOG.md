@@ -14,13 +14,17 @@ two-digit zero-padded components after the major version.
   snapshot under `/opt/iros2j`, compatible with iMAVROS 1.0.0.2.
 - Declared the exact `iros2j-*` package closure required by VINS instead of
   depending on the obsolete monolithic `iros2-0` package.
+- Added a shared-config launch for `feature_tracker` and `vins_estimator`, plus
+  DataSetsManager-backed dataset smoke evidence for `iv.dev.4.ff.1`/`dev_04`.
+- Made the Ubuntu 24.04/Jazzy AMD64 development stage explicit and registered
+  repository unit contracts in the standard `colcon test` report.
 
 ### Removed
 
 - Removed the release-manifest contract for a private `cv_bridge` overlay;
   `cv_bridge` is supplied by `iros2j-cv-bridge`.
 
-## Process [1.1.0] - Unreleased
+## Process [1.2.0] - Unreleased
 
 ### Changed
 
@@ -30,6 +34,11 @@ two-digit zero-padded components after the major version.
 - Retained schema 1 validation only for immutable historical releases.
 - Added reproducible ROS 2 dataset/odometry and configured Pi camera/FCU
   hardware acceptance gates.
+- Replaced path-driven dataset release acceptance with a tokenless,
+  checksum-pinned DataSetsManager run-manifest prepared on the host; retained
+  path parameters as a deprecated expert override for one compatibility cycle.
+- Classified Ubuntu AMD64 dataset evidence as development-only and reserved
+  release evidence for a native Debian 13 ARM64 rerun.
 
 ## Process [1.0.0] - 2026-07-28
 

@@ -1,7 +1,7 @@
 from launch import LaunchDescription
-from launch.actions import LogInfo
+from launch.actions import DeclareLaunchArgument, LogInfo
 from ament_index_python.packages import get_package_share_directory
-from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 
 def generate_launch_description():
@@ -12,6 +12,7 @@ def generate_launch_description():
         config_pkg_path,
         'config/euroc/euroc_config.yaml'
     ])
+    config_file = LaunchConfiguration('config_file')
 
 
     vins_path = PathJoinSubstitution([
@@ -27,12 +28,17 @@ def generate_launch_description():
         namespace='feature_tracker',
         output='screen',
         parameters=[{
-            'config_file': config_path,
+            'config_file': config_file,
             'vins_folder': vins_path
         }]
     )
 
     return LaunchDescription([
-        LogInfo(msg=['[feature tracker launch] config path: ', config_path]),
+        DeclareLaunchArgument(
+            'config_file',
+            default_value=config_path,
+            description='VINS YAML configuration (EuRoC remains the default)'
+        ),
+        LogInfo(msg=['[feature tracker launch] config path: ', config_file]),
         feature_tracker_node
     ])

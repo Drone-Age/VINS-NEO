@@ -30,11 +30,12 @@ Optional:
   --install-dependencies       install Debian build dependencies with apt
   --install-test               install the generated package and smoke-test it
   --integration-test           verify iros2j -> iMAVROS -> VINS activation
-  --dataset-test               run the configured VINS dataset test runner
+  --dataset-test               run the prepared DataSetsManager dataset gate
   --skip-tests                 build and package without test execution
-  --vins-config FILE           VINS YAML used by the dataset test
-  --dataset PATH               bag file or directory containing data.bag
-  --dataset-runner FILE        vins_test.py path
+  --dataset-run-manifest FILE  tokenless host-prepared DSM run manifest
+  --dataset-runner FILE        dataset_e2e.py path (default: source tree)
+  --vins-config FILE           DEPRECATED expert config override (one cycle)
+  --dataset PATH               DEPRECATED expert bag override (one cycle)
 EOF
 }
 
@@ -65,6 +66,7 @@ skip_tests=false
 vins_config=
 dataset=
 dataset_runner=
+dataset_run_manifest=
 
 while (($#)); do
   case "$1" in
@@ -91,6 +93,7 @@ while (($#)); do
     --install-test) install_test=true; shift ;;
     --integration-test) integration_test=true; shift ;;
     --dataset-test) dataset_test=true; shift ;;
+    --dataset-run-manifest) dataset_run_manifest=$2; shift 2 ;;
     --skip-tests) skip_tests=true; shift ;;
     --vins-config) vins_config=$2; shift 2 ;;
     --dataset) dataset=$2; shift 2 ;;
@@ -151,6 +154,7 @@ done
 mkdir -p "$evidence_dir"
 evidence_dir=$(realpath "$evidence_dir")
 source_dir=$(realpath "$source_dir")
+dataset_runner=${dataset_runner:-$source_dir/tools/dataset_e2e.py}
 log_file="$evidence_dir/native-release.log"
 exec > >(tee -a "$log_file") 2>&1
 test_report="$evidence_dir/test-results.tsv"
@@ -579,49 +583,52 @@ fi
 if $dataset_test; then
   current_test_id=vins_dataset
   current_test_target="configured VINS dataset"
-  current_test_command="vins_test.py controlled dataset gate"
+  current_test_command="dataset_e2e.py prepared DSM run-manifest gate"
   step "Run dataset test"
   [[ $install_test == true ]] ||
     fail "--dataset-test requires --install-test"
-  [[ -f $vins_config ]] || fail "VINS config does not exist: $vins_config"
   [[ -f $dataset_runner ]] ||
     fail "Dataset runner does not exist: $dataset_runner"
-  bag=$dataset
-  [[ -d $bag ]] && bag="$bag/data.bag"
-  [[ -e $bag ]] || fail "Dataset bag does not exist: $bag"
-  dataset_config="$work_dir/dataset-config.yaml"
-  dataset_test_json="$work_dir/dataset-test.json"
-  cp "$vins_config" "$dataset_config"
-  cat >"$dataset_test_json" <<'EOF'
-{
-  "objective": "delta_xy",
-  "parameters": {
-    "acc_n": {
-      "step": 0.001,
-      "min_step": 0.001,
-      "max_fails": 0,
-      "max_trials": 1,
-      "max_step_reductions": 0
-    }
-  },
-  "test": {
-    "repeats": 1,
-    "aggregation": "median"
-  }
-}
-EOF
-  python3 "$dataset_runner" --ros2 -param acc_n \
-    --test-json "$dataset_test_json" \
-    --config "$dataset_config" \
-    --bag "$bag" \
-    --ros-setup /opt/iros2j/setup.bash \
-    --vins-setup /opt/vins/setup.bash |
-    tee "$evidence_dir/dataset-test.txt"
+  dataset_evidence="$evidence_dir/dataset-e2e"
+  if [[ -n $dataset_run_manifest ]]; then
+    [[ -f $dataset_run_manifest ]] ||
+      fail "Prepared dataset run manifest does not exist: $dataset_run_manifest"
+    python3 "$dataset_runner" \
+      --run-manifest "$dataset_run_manifest" \
+      --suite smoke \
+      --evidence-dir "$dataset_evidence"
+  else
+    printf 'WARNING: --dataset/--vins-config are deprecated expert overrides; prepare a DSM run manifest instead.\n' >&2
+    [[ -n $dataset && -e $dataset ]] || fail "Deprecated dataset override is missing"
+    [[ -n $vins_config && -f $vins_config ]] || fail "Deprecated VINS config override is missing"
+    python3 "$dataset_runner" \
+      --dataset-id deprecated.expert.override \
+      --suite smoke \
+      --bag "$dataset" \
+      --config "$vins_config" \
+      --evidence-dir "$dataset_evidence"
+  fi
+  python3 - "$dataset_evidence/dataset-e2e-result.json" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+result = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+if result.get("status") != "PASS":
+    raise SystemExit(f"dataset e2e did not pass: {result.get('reason', 'unknown reason')}")
+required = (
+    "dataset_id", "profile", "artifact_version", "artifact_sha256",
+    "config_sha256", "suite_version", "dsm_client_version",
+)
+missing = [name for name in required if not result.get("inputs", {}).get(name)]
+if missing:
+    raise SystemExit("dataset e2e result lacks release inputs: " + ", ".join(missing))
+PY
   record_result vins_dataset PASS "$current_test_target" \
-    "$current_test_command" "$evidence_dir/dataset-test.txt"
+    "$current_test_command" "$dataset_evidence/dataset-e2e-result.json"
 else
   record_result vins_dataset NOT_RUN "configured VINS dataset" \
-    "vins_test.py controlled dataset gate" none \
+    "dataset_e2e.py prepared DSM run-manifest gate" none \
     "--dataset-test was not supplied" blocked
 fi
 

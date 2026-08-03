@@ -12,6 +12,7 @@ def generate_launch_description():
         config_pkg_path,
         'config/euroc/euroc_config.yaml'
     ])
+    config_file = LaunchConfiguration('config_file')
 
     vins_path = PathJoinSubstitution([
         config_pkg_path,
@@ -41,7 +42,7 @@ def generate_launch_description():
             'GLOG_vmodule': '*=-1'
         },
         parameters=[{
-            'config_file': config_path,
+            'config_file': config_file,
             'vins_folder': vins_path,
             'logging.level': 'INFO',
             'logging.period_ms': 2000
@@ -66,7 +67,12 @@ def generate_launch_description():
     #)
 
     return LaunchDescription([
-        LogInfo(msg=['[vins estimator launch] config path: ', config_path]),
+        DeclareLaunchArgument(
+            'config_file',
+            default_value=config_path,
+            description='VINS YAML configuration (EuRoC remains the default)'
+        ),
+        LogInfo(msg=['[vins estimator launch] config path: ', config_file]),
         LogInfo(msg=['[vins estimator launch] vins path: ', vins_path]),
         LogInfo(msg=['[vins estimator launch] support path: ', support_path]),
         vins_estimator_node#,
