@@ -216,7 +216,8 @@ try {
         tests = [ordered]@{
             colcon = "PASS"
             repository_contracts = "PASS"
-            executed_by = "Dockerfile:test"
+            debian_package_install_smoke = "PASS"
+            executed_by = @("Dockerfile:test", "Dockerfile:deb-smoke")
         }
         image = [ordered]@{
             tag = $imageTag

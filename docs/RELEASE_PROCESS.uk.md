@@ -51,8 +51,8 @@ Schema 2 та 3 НЕ МАЮТЬ містити `CV_BRIDGE_REF`. VINS викор�
    `release` і той самий точний фінальний commit.
 10. Створити незмінні product/process tags на цьому commit. GitHub Release
     ОБОВ’ЯЗКОВО містить AMD64 test/deployment image, AMD64 Debian package,
-    AMD64 JSON manifest і checksums, а також ARM64 production package,
-    checksums і release evidence.
+    AMD64 JSON manifest, checksums і dataset evidence, а також ARM64
+    production package, checksums і release evidence.
 11. Завантажити кожний опублікований artifact, перевірити checksum,
     перевстановити або завантажити його на відповідній платформі та повторити
     застосовні smoke й integration checks.

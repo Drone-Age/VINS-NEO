@@ -48,6 +48,9 @@ class Amd64ReleaseContractTest(unittest.TestCase):
         self.assertIn(
             'org.drone-age.vins.evidence-class="development"', dockerfile
         )
+        self.assertIn("FROM dependencies AS deb-smoke", dockerfile)
+        self.assertIn('dpkg -i "${package}"', dockerfile)
+        self.assertIn("ros2 run vins_estimator vins_estimator --version", dockerfile)
 
     def test_builder_requires_clean_exact_commit_and_amd64(self) -> None:
         builder = read("tools/build-amd64-test-release.ps1")

@@ -17,7 +17,7 @@ process governance.
 | Install | Clean APT install і clean-shell VINS smoke проходять. |
 | Integration | `/opt/iros2j`, `/opt/imavros`, `/opt/vins` активуються саме в цьому порядку; Fast DDS, topics, QoS, timestamps і frames проходять. |
 | Dataset | Підготовлений незмінний DSM run-manifest проходить VINS-owned runner на налаштованій Raspberry Pi 5. |
-| Publication | Versioned release містить AMD64 test-environment image/package/manifest/checksums та ARM64 production package/evidence. |
+| Publication | Versioned release містить AMD64 test-environment image/package/manifest/checksums/dataset evidence та ARM64 production package/evidence. |
 | Post-release | Кожна опублікована checksum, image load або reinstall, smoke і застосовна integration check проходять. |
 
 Тривалий звіт ОБОВ’ЯЗКОВО містить test ID, result, timestamps, host, target,

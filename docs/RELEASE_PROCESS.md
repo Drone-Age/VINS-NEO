@@ -52,8 +52,8 @@ Schema 2 and 3 MUST NOT contain `CV_BRIDGE_REF`. VINS consumes
    evidence class and references the same exact final commit.
 10. Create immutable product/process tags on that commit. The GitHub Release
     MUST include the AMD64 test/deployment image, AMD64 Debian package, AMD64
-    JSON manifest and checksums, plus the ARM64 production package, checksums,
-    and release evidence.
+    JSON manifest, checksums and dataset evidence, plus the ARM64 production
+    package, checksums, and release evidence.
 11. Download every published artifact, verify its checksum, reinstall or load
     it on the matching platform, and repeat the applicable smoke and
     integration checks.

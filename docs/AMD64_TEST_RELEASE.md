@@ -17,7 +17,8 @@ pwsh ./tools/build-amd64-test-release.ps1 `
 
 The command MUST fail for a dirty worktree, metadata mismatch, non-AMD64
 image, failed `colcon test`, failed repository contract, incorrect image
-revision label, invalid Debian package identity, or asset write failure.
+revision label, invalid Debian package identity, failed clean package-install
+smoke, or asset write failure.
 
 The same builder is exposed by the manual **Ubuntu 24 AMD64 test release**
 GitHub Actions workflow. Dispatch it on the frozen final commit, not on a
@@ -41,6 +42,10 @@ supports `shell`, `version`, and tokenless `dataset-e2e --run-manifest ...`
 entrypoints. Prepared manifest artifact/config paths MUST be mounted at the
 same absolute paths inside the container.
 
+The Debian asset is installed in a separate VINS-free Ubuntu/Jazzy dependency
+stage and MUST run `vins_estimator --version` before the final package can be
+exported.
+
 ## Release acceptance
 
 On the same exact commit, run the real `iv.dev.4.ff.1` smoke suite on Ubuntu
@@ -48,7 +53,7 @@ On the same exact commit, run the real `iv.dev.4.ff.1` smoke suite on Ubuntu
 Then repeat the dataset and native package/integration gates on Debian 13
 ARM64; only that result is `release` evidence.
 
-After both gates pass, attach all AMD64 assets alongside the ARM64 production
-assets to the versioned GitHub Release. If a fix changes the source commit,
-discard both architecture evidence sets and rebuild/retest from the new exact
-final commit.
+After both gates pass, attach all AMD64 assets and the AMD64
+`dataset-e2e-result.json` alongside the ARM64 production assets/evidence to the
+versioned GitHub Release. If a fix changes the source commit, discard both
+architecture evidence sets and rebuild/retest from the new exact final commit.

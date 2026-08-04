@@ -17,7 +17,7 @@ state model.
 | Install | Clean APT install and clean-shell VINS smoke pass. |
 | Integration | Source `/opt/iros2j`, `/opt/imavros`, `/opt/vins` in order; Fast DDS, topics, QoS, timestamps, and frames pass. |
 | Dataset | Prepared immutable DSM run-manifest passes the VINS-owned runner on the configured Raspberry Pi 5. |
-| Publication | The versioned release includes the AMD64 test-environment image/package/manifest/checksums and ARM64 production package/evidence. |
+| Publication | The versioned release includes the AMD64 test-environment image/package/manifest/checksums/dataset evidence and ARM64 production package/evidence. |
 | Post-release | Every published checksum, image load or reinstall, smoke, and applicable integration check passes. |
 
 The durable report MUST record test ID, result, timestamps, host, target,

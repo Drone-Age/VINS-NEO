@@ -18,7 +18,7 @@ pwsh ./tools/build-amd64-test-release.ps1 `
 Команда ОБОВ’ЯЗКОВО завершується помилкою для dirty worktree, metadata
 mismatch, не-AMD64 image, невдалого `colcon test`, невдалого repository
 contract, неправильної image revision label, неправильної ідентичності Debian
-package або помилки запису asset.
+package, невдалого clean package-install smoke або помилки запису asset.
 
 Той самий builder доступний через ручний GitHub Actions workflow
 **Ubuntu 24 AMD64 test release**. Запускайте його на замороженому фінальному
@@ -42,6 +42,10 @@ tests блокують створення image і package. Image підтрим
 із підготовленого manifest ОБОВ’ЯЗКОВО монтуються за тими самими абсолютними
 шляхами всередині container.
 
+Debian asset встановлюється в окремому VINS-free Ubuntu/Jazzy dependency stage
+і ОБОВ’ЯЗКОВО запускає `vins_estimator --version`, перш ніж фінальний package
+можна експортувати.
+
 ## Приймання релізу
 
 На тому самому точному commit виконайте реальний smoke suite `iv.dev.4.ff.1`
@@ -49,7 +53,7 @@ tests блокують створення image і package. Image підтрим
 `development`. Потім повторіть dataset і native package/integration gates на
 Debian 13 ARM64; лише цей result є evidence класу `release`.
 
-Після проходження обох gate додайте всі AMD64 assets разом з ARM64 production
-assets до versioned GitHub Release. Якщо виправлення змінює source commit,
-відкиньте evidence обох архітектур і повторіть build/test з нового точного
-фінального commit.
+Після проходження обох gate додайте всі AMD64 assets і AMD64
+`dataset-e2e-result.json` разом з ARM64 production assets/evidence до versioned
+GitHub Release. Якщо виправлення змінює source commit, відкиньте evidence обох
+архітектур і повторіть build/test з нового точного фінального commit.

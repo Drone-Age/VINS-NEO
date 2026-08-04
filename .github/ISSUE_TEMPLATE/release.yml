@@ -145,7 +145,7 @@ body:
       options:
         - label: The Git tag will be created only after both architecture gates pass on the exact final commit.
           required: true
-        - label: The GitHub Release will include AMD64 test/deployment assets and ARM64 production assets/evidence.
+        - label: The GitHub Release will include AMD64 test/deployment assets/dataset evidence and ARM64 production assets/evidence.
           required: true
         - label: The published package will be verified on a clean supported Raspberry Pi OS or Debian 13 ARM64 system.
           required: true

@@ -122,6 +122,16 @@ RUN package_arch="$(dpkg --print-architecture)" \
         "${package_root}" \
         "/out/vins-mono-ros2_${PACKAGE_VERSION}_${package_arch}.deb"
 
+FROM dependencies AS deb-smoke
+
+COPY --from=deb-build /out/ /out/
+RUN package="$(find /out -maxdepth 1 -type f -name '*.deb' -print -quit)" \
+    && test -n "${package}" \
+    && dpkg -i "${package}" \
+    && source /opt/ros/${ROS_DISTRO}/setup.bash \
+    && source /opt/vins/setup.bash \
+    && ros2 run vins_estimator vins_estimator --version
+
 FROM scratch AS deb
 
-COPY --from=deb-build /out/ /
+COPY --from=deb-smoke /out/ /
