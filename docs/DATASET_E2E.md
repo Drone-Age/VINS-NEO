@@ -41,6 +41,12 @@ docker compose run --rm vins test
 # Then run tools/dataset_e2e.py against the real immutable dataset.
 ```
 
+For a release candidate, build the version-matched test environment with
+`tools/build-amd64-test-release.ps1`. The emitted image can run a tokenless
+prepared manifest through the `dataset-e2e` entrypoint when the manifest,
+artifact, and configuration paths are mounted at their recorded absolute
+paths. See [Ubuntu 24.04 AMD64 test release](AMD64_TEST_RELEASE.md).
+
 The combined launch is `vins_estimator vins_neo.launch.py`. It passes one
 `config_file` to both nodes and exposes `vins_folder`, `use_sim_time`,
 `log_level`, and `logging_period_ms`. Existing separate launches keep the
@@ -65,7 +71,8 @@ mismatch, missing topics, early exit, timeout, and missing odometry are explicit
 `FAIL` results. Cleanup runs for PASS, FAIL, timeout, and interruption.
 
 Ubuntu 24.04 AMD64 produces `development` evidence. Only a repeat on native
-Debian 13 ARM64 outside Docker can produce `release` evidence.
+Debian 13 ARM64 outside Docker can produce `release` evidence. Both runs are
+mandatory for a product release and MUST identify the same exact final commit.
 
 ## Tokenless Raspberry Pi handoff
 

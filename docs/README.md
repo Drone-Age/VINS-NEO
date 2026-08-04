@@ -11,6 +11,8 @@ Ukrainian is a mandatory maintained localization.
 | Release process | [English](RELEASE_PROCESS.md) | [Українська](RELEASE_PROCESS.uk.md) |
 | Pre-release testing | [English](PRE_RELEASE_TESTING.md) | [Українська](PRE_RELEASE_TESTING.uk.md) |
 | DataSetsManager dataset e2e | [English](DATASET_E2E.md) | [Українська](DATASET_E2E.uk.md) |
+| Ubuntu 24.04 AMD64 test release | [English](AMD64_TEST_RELEASE.md) | [Українська](AMD64_TEST_RELEASE.uk.md) |
+| Ubuntu 24.04 AMD64 test release | [English](AMD64_TEST_RELEASE.md) | [Українська](AMD64_TEST_RELEASE.uk.md) |
 
 The existing product and operational guides use the legacy `*_UK.md` naming
 convention. Their migration status and change rules are defined in

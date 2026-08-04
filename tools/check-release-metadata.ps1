@@ -131,10 +131,10 @@ try {
     foreach ($name in $required) {
         $null = Require-ManifestValue $manifest $name
     }
-    if ($manifest["MANIFEST_SCHEMA"] -notin @("1", "2")) {
+    if ($manifest["MANIFEST_SCHEMA"] -notin @("1", "2", "3")) {
         throw "Unsupported MANIFEST_SCHEMA: $($manifest['MANIFEST_SCHEMA'])"
     }
-    if ($manifest["MANIFEST_SCHEMA"] -eq "2") {
+    if ($manifest["MANIFEST_SCHEMA"] -in @("2", "3")) {
         foreach ($name in @(
             "IROS_NAME", "IROS_SOURCE_TAG", "IROS_SOURCE_COMMIT",
             "IROS_PREFIX", "IROS_PACKAGES", "IROS_RUNTIME_PACKAGES",
@@ -147,6 +147,25 @@ try {
         }
     } else {
         $null = Require-ManifestValue $manifest "CV_BRIDGE_REF"
+    }
+    if ($manifest["MANIFEST_SCHEMA"] -eq "3") {
+        foreach ($name in @(
+            "AMD64_TEST_OS", "AMD64_TEST_ARCH", "AMD64_TEST_ROS_DISTRO",
+            "AMD64_TEST_EVIDENCE_CLASS", "AMD64_TEST_IMAGE_ASSET",
+            "AMD64_TEST_DEB_ASSET", "AMD64_TEST_MANIFEST_ASSET",
+            "AMD64_TEST_CHECKSUM_ASSET"
+        )) {
+            $null = Require-ManifestValue $manifest $name
+        }
+        if ($manifest["AMD64_TEST_OS"] -ne "ubuntu-24.04" -or
+            $manifest["AMD64_TEST_ARCH"] -ne "amd64" -or
+            $manifest["AMD64_TEST_ROS_DISTRO"] -ne "jazzy" -or
+            $manifest["AMD64_TEST_EVIDENCE_CLASS"] -ne "development") {
+            throw (
+                "Schema 3 requires Ubuntu 24.04/Jazzy AMD64 with " +
+                "development evidence class."
+            )
+        }
     }
     if ($manifest["RELEASE_TAG"] -ne $ReleaseTag) {
         throw "Manifest RELEASE_TAG does not match $ReleaseTag."
@@ -173,6 +192,23 @@ try {
         [int]$matches[1], [int]$matches[2], [int]$matches[3], [int]$matches[4]
     if ($derivedTag -ne $ReleaseTag) {
         throw "$version maps to $derivedTag, not $ReleaseTag."
+    }
+    if ($manifest["MANIFEST_SCHEMA"] -eq "3") {
+        $expectedAmd64Assets = @{
+            AMD64_TEST_IMAGE_ASSET =
+                "vins-neo_${version}_ubuntu24-amd64-test-env.tar"
+            AMD64_TEST_DEB_ASSET =
+                "vins-mono-ros2_${version}_amd64.deb"
+            AMD64_TEST_MANIFEST_ASSET =
+                "vins-neo_${version}_ubuntu24-amd64-release-manifest.json"
+            AMD64_TEST_CHECKSUM_ASSET =
+                "vins-neo_${version}_ubuntu24-amd64_SHA256SUMS"
+        }
+        foreach ($name in $expectedAmd64Assets.Keys) {
+            if ($manifest[$name] -ne $expectedAmd64Assets[$name]) {
+                throw "$name is inconsistent with PRODUCT_VERSION."
+            }
+        }
     }
     $rosPackageVersion = "{0}.{1}.{2}" -f
         [int]$matches[1], [int]$matches[2], [int]$matches[3]
@@ -210,15 +246,15 @@ try {
 
     $irosVersion = $manifest["IROS_VERSION"]
     $irosDebVersion = $manifest["IROS_DEB_VERSION"]
-    if ($manifest["MANIFEST_SCHEMA"] -eq "2") {
+    if ($manifest["MANIFEST_SCHEMA"] -in @("2", "3")) {
         if ($manifest["IROS_NAME"] -ne "iros2j") {
-            throw "Schema 2 requires IROS_NAME=iros2j."
+            throw "Schema 2/3 requires IROS_NAME=iros2j."
         }
         if ($manifest["IROS_PREFIX"] -ne "/opt/iros2j") {
-            throw "Schema 2 requires IROS_PREFIX=/opt/iros2j."
+            throw "Schema 2/3 requires IROS_PREFIX=/opt/iros2j."
         }
         if ($manifest["IMAVROS_PREFIX"] -ne "/opt/imavros") {
-            throw "Schema 2 requires IMAVROS_PREFIX=/opt/imavros."
+            throw "Schema 2/3 requires IMAVROS_PREFIX=/opt/imavros."
         }
         $expectedReleaseUrl =
             "https://github.com/Drone-Age/iros2_0/releases/tag/" +
@@ -315,7 +351,7 @@ try {
             if ($actualHash -ne $manifest["IROS_SHA256"]) {
                 throw "Downloaded iROS2 SHA-256 does not match the manifest."
             }
-            if ($manifest["MANIFEST_SCHEMA"] -eq "2") {
+            if ($manifest["MANIFEST_SCHEMA"] -in @("2", "3")) {
                 $imavrosTemporary = Join-Path $temporaryDirectory "imavros.deb"
                 Get-ReleaseAsset -Uri $manifest["IMAVROS_ASSET_URL"] `
                     -Destination $imavrosTemporary

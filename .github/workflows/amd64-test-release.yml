@@ -1,0 +1,38 @@
+name: Ubuntu 24 AMD64 test release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Product tag described by config/releases/<tag>.env
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build tested AMD64 release assets
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    steps:
+      - name: Check out the selected exact commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Build, test and package
+        shell: pwsh
+        run: |
+          ./tools/build-amd64-test-release.ps1 `
+            -ReleaseTag '${{ inputs.release_tag }}' `
+            -OutputDirectory ./output/amd64-release
+
+      - name: Retain versioned release assets
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: vins-neo-${{ inputs.release_tag }}-ubuntu24-amd64
+          path: output/amd64-release/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14

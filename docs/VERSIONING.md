@@ -15,9 +15,13 @@ example `v1_00_02_00`. Product-version semantics and ROS package-version
 mapping remain defined by `DEVELOPMENT_STANDARDS_UK.md` until that legacy
 document is migrated.
 
-A product release binds the source commit, dependency manifest, Debian
-package version, artifact checksum, native gate evidence, changelog entry, and
-release notes. Published product tags are immutable.
+A product release binds one exact final source commit, dependency manifest,
+the Ubuntu 24.04 AMD64 test/deployment image and Debian package, the native
+Debian 13 ARM64 production package, every artifact checksum, both gate evidence
+records, the changelog entry, and release notes. AMD64 evidence is classified
+as `development`; only the native ARM64 evidence can authorize a release.
+Published product tags are immutable and MUST point to the commit tested by
+both architecture gates.
 
 ## Process version
 

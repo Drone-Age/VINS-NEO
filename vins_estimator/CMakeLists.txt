@@ -113,6 +113,14 @@ if(BUILD_TESTING)
     TIMEOUT 60
     GENERATE_RESULT_FOR_RETURN_CODE_ZERO
   )
+  ament_add_test(
+    repository_amd64_release_contract
+    COMMAND "${Python3_EXECUTABLE}" -m unittest
+      tests.test_amd64_release_contract
+    WORKING_DIRECTORY "${REPOSITORY_ROOT}"
+    TIMEOUT 60
+    GENERATE_RESULT_FOR_RETURN_CODE_ZERO
+  )
 endif()
 
 

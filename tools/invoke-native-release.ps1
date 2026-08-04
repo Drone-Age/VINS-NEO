@@ -165,8 +165,8 @@ try {
     if ($manifest["RELEASE_TAG"] -ne $ReleaseTag) {
         throw "Release manifest tag does not match $ReleaseTag."
     }
-    if ($manifest["MANIFEST_SCHEMA"] -ne "2") {
-        throw "Native iros2j release requires MANIFEST_SCHEMA=2."
+    if ($manifest["MANIFEST_SCHEMA"] -notin @("2", "3")) {
+        throw "Native iros2j release requires MANIFEST_SCHEMA=2 or 3."
     }
 
     $target = "${nativeUser}@${nativeHost}"

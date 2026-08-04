@@ -18,13 +18,15 @@ two-digit zero-padded components after the major version.
   DataSetsManager-backed dataset smoke evidence for `iv.dev.4.ff.1`/`dev_04`.
 - Made the Ubuntu 24.04/Jazzy AMD64 development stage explicit and registered
   repository unit contracts in the standard `colcon test` report.
+- Added versioned Ubuntu 24.04/Jazzy AMD64 test-environment image and Debian
+  package assets to every product release, with a build manifest and SHA-256.
 
 ### Removed
 
 - Removed the release-manifest contract for a private `cv_bridge` overlay;
   `cv_bridge` is supplied by `iros2j-cv-bridge`.
 
-## Process [1.2.0] - Unreleased
+## Process [1.3.0] - Unreleased
 
 ### Changed
 
@@ -39,6 +41,10 @@ two-digit zero-padded components after the major version.
   path parameters as a deprecated expert override for one compatibility cycle.
 - Classified Ubuntu AMD64 dataset evidence as development-only and reserved
   release evidence for a native Debian 13 ARM64 rerun.
+- Made the AMD64 first-cycle/test-environment build a mandatory versioned
+  release asset while retaining native Debian 13 ARM64 as the release gate.
+- Required AMD64 and ARM64 gates to run on the same exact final commit; any
+  source fix now invalidates and restarts both evidence sets.
 
 ## Process [1.0.0] - 2026-07-28
 

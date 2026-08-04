@@ -8,7 +8,8 @@ process governance.
 | Gate | Умова прийняття |
 |---|---|
 | Metadata | Product/tag/manifest/changelog узгоджені; підписані assets і незмінні commits зафіксовані. |
-| Platform | Native Raspberry Pi 5, Debian 13, `aarch64`/`arm64`; Docker, емуляція й cross-compilation не є evidence. |
+| AMD64 test/deployment | На точному фінальному commit проходять Ubuntu 24.04/Jazzy `linux/amd64` build, `colcon test`, repository contracts, реальний dataset e2e, перевірка image/package, manifest і SHA-256. Evidence class — `development`. |
+| ARM64 release platform | На тому самому точному фінальному commit: native Raspberry Pi 5, Debian 13, `aarch64`/`arm64`; Docker, емуляція й cross-compilation не є evidence. |
 | Runtime | Немає `iros2-0` та `/opt/iros2_0`; кожний потрібний `iros2j-*` має точну версію `1.0.3-1+deb13`. |
 | Build | Після source `/opt/iros2j/setup.bash` Release build і `colcon test` проходять. |
 | Ownership | `ros2 pkg prefix cv_bridge` дорівнює `/opt/iros2j`; `/opt/vins` не містить приватного ROS underlay. |
@@ -16,11 +17,17 @@ process governance.
 | Install | Clean APT install і clean-shell VINS smoke проходять. |
 | Integration | `/opt/iros2j`, `/opt/imavros`, `/opt/vins` активуються саме в цьому порядку; Fast DDS, topics, QoS, timestamps і frames проходять. |
 | Dataset | Підготовлений незмінний DSM run-manifest проходить VINS-owned runner на налаштованій Raspberry Pi 5. |
-| Post-release | Опубліковані checksum, reinstall, smoke та integration checks проходять. |
+| Publication | Versioned release містить AMD64 test-environment image/package/manifest/checksums та ARM64 production package/evidence. |
+| Post-release | Кожна опублікована checksum, image load або reinstall, smoke і застосовна integration check проходять. |
 
 Тривалий звіт ОБОВ’ЯЗКОВО містить test ID, result, timestamps, host, target,
 точну command, commit, dependency identity, evidence path і причину кожного
 результату, відмінного від `PASS`.
+
+AMD64 gate є обов’язковим для першого кола локальних тестів і розгортання
+тестових середовищ. Його `PASS` не дозволяє продуктовий реліз. Дозвіл на реліз
+і надалі потребує проходження native Debian 13 ARM64 gate на тому самому
+commit. Зміна source робить обидва evidence records недійсними.
 
 Для acceptance-перевірки на налаштованій Raspberry Pi 5 підготуйте dataset на
 host через HTTPS, укажіть `DATASET_RUN_MANIFEST` в ignored native environment і
