@@ -29,7 +29,7 @@ class Iros2jMigrationTest(unittest.TestCase):
         ).read_text(encoding="utf-8")
 
     def test_exact_runtime_identity(self) -> None:
-        self.assertEqual(self.manifest["MANIFEST_SCHEMA"], "2")
+        self.assertEqual(self.manifest["MANIFEST_SCHEMA"], "3")
         self.assertEqual(self.manifest["IROS_NAME"], "iros2j")
         self.assertEqual(self.manifest["IROS_VERSION"], "1.0.3")
         self.assertEqual(
@@ -38,6 +38,10 @@ class Iros2jMigrationTest(unittest.TestCase):
         self.assertEqual(self.manifest["IROS_PREFIX"], "/opt/iros2j")
         self.assertEqual(self.manifest["IMAVROS_VERSION"], "1.0.0.2")
         self.assertEqual(self.manifest["IMAVROS_PREFIX"], "/opt/imavros")
+        self.assertIn(
+            '$manifest["MANIFEST_SCHEMA"] -notin @("2", "3")',
+            self.dispatcher,
+        )
 
     def test_iros2j_dependency_closure_is_exact_and_sorted(self) -> None:
         packages = self.manifest["IROS_PACKAGES"].split(",")
@@ -88,12 +92,16 @@ class Iros2jMigrationTest(unittest.TestCase):
             ("docs/RELEASE_PROCESS.md", "docs/RELEASE_PROCESS.uk.md"),
             ("docs/PRE_RELEASE_TESTING.md", "docs/PRE_RELEASE_TESTING.uk.md"),
             ("docs/DATASET_E2E.md", "docs/DATASET_E2E.uk.md"),
+            ("docs/AMD64_TEST_RELEASE.md", "docs/AMD64_TEST_RELEASE.uk.md"),
             ("config/native/README.md", "config/native/README.uk.md"),
             ("config/releases/README.md", "config/releases/README.uk.md"),
         )
         for english, ukrainian in pairs:
             self.assertTrue((ROOT / english).is_file(), english)
             self.assertTrue((ROOT / ukrainian).is_file(), ukrainian)
+        for english, ukrainian in pairs:
+            if "AMD64_TEST_RELEASE" in english:
+                continue
             for path in (english, ukrainian):
                 text = (ROOT / path).read_text(encoding="utf-8")
                 self.assertIn("iros2j", text)
@@ -102,10 +110,10 @@ class Iros2jMigrationTest(unittest.TestCase):
     def test_process_version_records_contract_change(self) -> None:
         self.assertEqual(
             (ROOT / "PROCESS_VERSION").read_text(encoding="utf-8").strip(),
-            "1.2.0",
+            "1.3.0",
         )
         changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        self.assertIn("## Process [1.2.0] - Unreleased", changelog)
+        self.assertIn("## Process [1.3.0] - Unreleased", changelog)
 
     def test_native_gate_emits_structured_results(self) -> None:
         for field in (

@@ -46,16 +46,49 @@ RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
 
 ENV BASH_ENV=/usr/local/share/vins/bash_env.sh
 
-FROM dependencies AS deb-build
+FROM build AS test
+
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
+    && source ${VINS_WS}/install/setup.bash \
+    && colcon test --merge-install --event-handlers console_direct+ \
+        --return-code-on-test-failure \
+    && colcon test-result --verbose
+
+FROM dependencies AS test-runtime
+
+ARG PRODUCT_VERSION=0.0.0.0
+ARG RELEASE_TAG=unreleased
+ARG SOURCE_COMMIT=unknown
+
+LABEL org.opencontainers.image.title="VINS-NEO Ubuntu test environment" \
+      org.opencontainers.image.description="Ubuntu 24.04/Jazzy AMD64 test and dataset environment; not ARM64 release evidence" \
+      org.opencontainers.image.source="https://github.com/Drone-Age/VINS-NEO" \
+      org.opencontainers.image.version="${PRODUCT_VERSION}" \
+      org.opencontainers.image.revision="${SOURCE_COMMIT}" \
+      org.drone-age.vins.release-tag="${RELEASE_TAG}" \
+      org.drone-age.vins.platform="ubuntu-24.04-amd64" \
+      org.drone-age.vins.evidence-class="development"
+
+ENV VINS_PREFIX=/opt/vins \
+    VINS_TOOLS=/opt/vins-neo/tools
+
+COPY docker/test-runtime-entrypoint.sh /usr/local/bin/vins-test-entrypoint
+COPY --from=test ${VINS_WS}/install/ ${VINS_PREFIX}/
+COPY tools/dataset_e2e.py tools/dataset_e2e_monitor.py ${VINS_TOOLS}/
+RUN sed -i 's/\r$//' /usr/local/bin/vins-test-entrypoint \
+    && chmod +x \
+        /usr/local/bin/vins-test-entrypoint \
+        ${VINS_TOOLS}/dataset_e2e.py \
+        ${VINS_TOOLS}/dataset_e2e_monitor.py
+
+ENTRYPOINT ["/usr/local/bin/vins-test-entrypoint"]
+CMD ["shell"]
+
+FROM test AS deb-build
 
 ARG PACKAGE_VERSION=1.0.2.0
 
-COPY . ${VINS_WS}
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
-    && colcon build \
-        --merge-install \
-        --executor sequential \
-        --install-base /opt/vins
+RUN cp -a ${VINS_WS}/install /opt/vins
 
 RUN package_arch="$(dpkg --print-architecture)" \
     && package_root="/tmp/vins-mono-ros2_${PACKAGE_VERSION}_${package_arch}" \
@@ -74,7 +107,7 @@ RUN package_arch="$(dpkg --print-architecture)" \
         'Maintainer: VINS-NEO-V1 maintainers' \
         "Depends: ros-${ROS_DISTRO}-ros-base, ros-${ROS_DISTRO}-cv-bridge, ros-${ROS_DISTRO}-image-transport, ros-${ROS_DISTRO}-message-filters, ros-${ROS_DISTRO}-tf2-ros, libboost-filesystem-dev, libboost-program-options-dev, libboost-system-dev, libceres-dev, libeigen3-dev, libopencv-dev" \
         'Description: VINS-MONO visual-inertial odometry for ROS 2' \
-        ' ARM64 ROS 2 overlay containing the VINS-MONO nodes, launch files,' \
+        ' ROS 2 overlay containing the VINS-MONO nodes, launch files,' \
         ' configuration, camera model, pose graph and benchmark tools.' \
         > "${package_root}/DEBIAN/control" \
     && printf '%s\n' \
@@ -89,6 +122,16 @@ RUN package_arch="$(dpkg --print-architecture)" \
         "${package_root}" \
         "/out/vins-mono-ros2_${PACKAGE_VERSION}_${package_arch}.deb"
 
+FROM dependencies AS deb-smoke
+
+COPY --from=deb-build /out/ /out/
+RUN package="$(find /out -maxdepth 1 -type f -name '*.deb' -print -quit)" \
+    && test -n "${package}" \
+    && dpkg -i "${package}" \
+    && source /opt/ros/${ROS_DISTRO}/setup.bash \
+    && source /opt/vins/setup.bash \
+    && ros2 run vins_estimator vins_estimator --version
+
 FROM scratch AS deb
 
-COPY --from=deb-build /out/ /
+COPY --from=deb-smoke /out/ /

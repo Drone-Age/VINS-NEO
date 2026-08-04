@@ -41,6 +41,12 @@ docker compose run --rm vins test
 # Потім запустіть tools/dataset_e2e.py з реальним незмінним dataset.
 ```
 
+Для release candidate зберіть version-matched test environment командою
+`tools/build-amd64-test-release.ps1`. Створений image може виконувати tokenless
+prepared manifest через entrypoint `dataset-e2e`, якщо manifest, artifact і
+configuration paths змонтовано за записаними абсолютними шляхами. Дивіться
+[Ubuntu 24.04 AMD64 test release](AMD64_TEST_RELEASE.uk.md).
+
 Комбінований launch — `vins_estimator vins_neo.launch.py`. Він передає один
 `config_file` обом вузлам і відкриває `vins_folder`, `use_sim_time`, `log_level`
 та `logging_period_ms`. Чинні окремі launch-файли зберігають EuRoC як default.
@@ -64,6 +70,8 @@ Cleanup виконується після PASS, FAIL, timeout і перерив�
 
 Ubuntu 24.04 AMD64 створює evidence класу `development`. Лише повторний запуск
 на native Debian 13 ARM64 поза Docker може створити evidence класу `release`.
+Обидва запуски є обов’язковими для продуктового релізу й ОБОВ’ЯЗКОВО
+ідентифікують той самий точний фінальний commit.
 
 ## Передавання на Raspberry Pi без token
 
